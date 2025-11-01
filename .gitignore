@@ -1,0 +1,17 @@
+# Streamlit e credenciais
+.streamlit/secrets.toml
+
+# Sessão do WhatsApp
+whatsapp_session/
+whatsapp_session/*
+
+# Ambientes virtuais
+venv/
+env/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Logs
+*.log
+log_*.txt

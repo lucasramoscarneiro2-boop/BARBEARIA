@@ -1,0 +1,40 @@
+[
+  {
+    "nome": "Lucas",
+    "telefone": "11954798017",
+    "data": "02/11/2025",
+    "hora": "09:00",
+    "criado_em": "01/11/2025 15:42",
+    "mensagem_enviada": true
+  },
+  {
+    "data": "03/11/2025",
+    "hora": "12:00",
+    "nome": "Almoço",
+    "telefone": "",
+    "servico": "Almoço",
+    "valor": 0,
+    "criado_em": "01/11/2025 19:29",
+    "bloqueado": true
+  },
+  {
+    "nome": "Lucas Ramos",
+    "telefone": "11954798017",
+    "servico": "Alisamento e corte",
+    "valor": 70,
+    "data": "02/11/2025",
+    "hora": "12:00",
+    "mensagem_enviada": false,
+    "criado_em": "01/11/2025 19:31"
+  },
+  {
+    "nome": "Lucas Ramos",
+    "telefone": "11954798017",
+    "servico": "Corte, Barba, Alisamento e Sobrancelha",
+    "valor": 110,
+    "data": "03/11/2025",
+    "hora": "09:00",
+    "mensagem_enviada": false,
+    "criado_em": "01/11/2025 19:32"
+  }
+]
