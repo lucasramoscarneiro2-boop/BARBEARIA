@@ -1,7 +1,7 @@
 streamlit==1.38.0
 pg8000==1.31.2
-sqlalchemy==2.0.32
+sqlalchemy==2.0.35
+supabase==2.5.1
 pandas==2.2.2
 python-dateutil==2.9.0
 requests==2.32.3
-supabase==2.5.1
