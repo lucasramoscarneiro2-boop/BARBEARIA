@@ -1,17 +1,17 @@
-import psycopg2
-import psycopg2.extras
+import pg8000
 import streamlit as st
 
 def get_conn():
-    cfg = st.secrets["postgres"]
-    return psycopg2.connect(
-        host=cfg["host"],
-        port=cfg["port"],
-        database=cfg["database"],
-        user=cfg["user"],
-        password=cfg["password"],
-        sslmode=cfg.get("sslmode", "require")
+    creds = st.secrets["postgres"]
+    conn = pg8000.connect(
+        host=creds["host"],
+        port=int(creds["port"]),
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        ssl_context=True
     )
+    return conn
 
 def listar_agendamentos_por_data(data_str):
     conn = get_conn()
