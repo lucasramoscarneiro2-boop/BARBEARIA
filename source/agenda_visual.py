@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import streamlit.components.v1 as components
 from streamlit_calendar import calendar
 from time import time
+import hashlib
 from db_supabase import (
     listar_agendamentos_por_data,
     cancelar_agendamento,
@@ -11,7 +12,7 @@ from db_supabase import (
 )
 
 # ==========================
-# CONFIGURAÇÃO GERAL
+# CONFIG GERAL
 # ==========================
 st.set_page_config(page_title="Agenda do Barbeiro", layout="centered", page_icon="💈")
 
@@ -28,55 +29,26 @@ body, .stApp {
     padding: 20px;
     box-shadow: 0 0 15px rgba(255,255,255,0.1);
 }
-.agenda-hora {
-    font-weight: bold;
-    width: 80px;
-    color: #00bfff;
-    display:inline-block;
-}
-.agenda-bloco {
-    border-bottom: 1px solid #333;
-    padding: 10px 0;
-}
+.agenda-hora { font-weight:bold;width:80px;color:#00bfff;display:inline-block; }
+.agenda-bloco { border-bottom:1px solid #333;padding:10px 0; }
 .ocupado {
-    background-color: #222;
-    border-left: 5px solid #00bfff;
-    border-radius: 10px;
-    padding: 10px;
-    margin-left: 10px;
+    background-color:#222;border-left:5px solid #00bfff;border-radius:10px;
+    padding:10px;margin-left:10px;
 }
 .bloqueado {
-    background-color: #400;
-    border-left: 5px solid #ff3333;
-    border-radius: 10px;
-    padding: 10px;
-    margin-left: 10px;
+    background-color:#400;border-left:5px solid #ff3333;border-radius:10px;
+    padding:10px;margin-left:10px;
 }
-.livre {
-    color: gray;
-    margin-left: 10px;
-}
+.livre { color:gray;margin-left:10px; }
 .toast {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background: linear-gradient(90deg, #0044cc, #ff0000, #ffffff);
-    background-size: 300% 300%;
-    color: #fff;
-    padding: 18px 28px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    font-weight: bold;
-    z-index: 9999;
-    animation: glow 3s ease-in-out infinite, fadein 0.5s, fadeout 0.5s 4s;
+    position:fixed;bottom:30px;right:30px;background:linear-gradient(90deg,#0044cc,#ff0000,#ffffff);
+    background-size:300% 300%;color:#fff;padding:18px 28px;border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);font-weight:bold;z-index:9999;
+    animation:glow 3s ease-in-out infinite, fadein 0.5s, fadeout 0.5s 4s;
 }
-@keyframes glow {
-  0% {background-position: 0% 50%;}
-  50% {background-position: 100% 50%;}
-  100% {background-position: 0% 50%;}
-}
-@keyframes fadein { from {opacity: 0; bottom: 10px;} to {opacity: 1; bottom: 30px;} }
-@keyframes fadeout { from {opacity: 1; bottom: 30px;} to {opacity: 0; bottom: 10px;} }
+@keyframes glow {0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+@keyframes fadein { from {opacity:0;bottom:10px;} to {opacity:1;bottom:30px;} }
+@keyframes fadeout { from {opacity:1;bottom:30px;} to {opacity:0;bottom:10px;} }
 </style>
 """, unsafe_allow_html=True)
 
@@ -84,29 +56,33 @@ st.title("💇‍♂️ Agenda do Barbeiro")
 st.markdown("Gerencie seus horários — veja agendamentos, bloqueie ou libere horários")
 
 # ==========================
-# LOGIN PERSISTENTE
+# LOGIN COM TOKEN PERSISTENTE
 # ==========================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 if "usuario" not in st.session_state:
     st.session_state.usuario = ""
-if "senha" not in st.session_state:
-    st.session_state.senha = ""
-if "ultimo_total" not in st.session_state:
-    st.session_state.ultimo_total = 0
-if "last_refresh" not in st.session_state:
-    st.session_state.last_refresh = time()
+if "token" not in st.session_state:
+    st.session_state.token = None
+
+# se já há token na URL, reaplica
+params = st.experimental_get_query_params()
+if "token" in params and not st.session_state.autenticado:
+    st.session_state.autenticado = True
+    st.session_state.token = params["token"][0]
+    st.session_state.usuario = params.get("usuario", [""])[0]
 
 if not st.session_state.autenticado:
     st.subheader("🔐 Login do barbeiro")
-    usuario = st.text_input("Usuário", value=st.session_state.usuario)
-    senha = st.text_input("Senha", type="password", value=st.session_state.senha)
-
+    usuario = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
     if st.button("Entrar"):
         if autenticar(usuario, senha):
+            token = hashlib.sha256(f"{usuario}{time()}".encode()).hexdigest()
             st.session_state.autenticado = True
             st.session_state.usuario = usuario
-            st.session_state.senha = senha
+            st.session_state.token = token
+            st.experimental_set_query_params(usuario=usuario, token=token)
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
         else:
@@ -114,9 +90,11 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# AUTOATUALIZAÇÃO SUAVE
+# AUTO REFRESH SUAVE
 # ==========================
-REFRESH_INTERVAL = 60  # segundos
+REFRESH_INTERVAL = 60
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time()
 if time() - st.session_state.last_refresh > REFRESH_INTERVAL:
     st.session_state.last_refresh = time()
     st.experimental_rerun()
@@ -124,10 +102,10 @@ if time() - st.session_state.last_refresh > REFRESH_INTERVAL:
 colA, colB, colC = st.columns([1,1,1])
 with colB:
     if st.button("🔄 Atualizar agora"):
-        st.rerun()
+        st.experimental_rerun()
 
 # ==========================
-# CALENDÁRIO SEMANAL VISUAL
+# CALENDÁRIO SEMANAL
 # ==========================
 st.divider()
 st.subheader("📆 Visualização semanal da agenda")
@@ -160,17 +138,20 @@ calendar_options = {
 calendar(events=eventos, options=calendar_options)
 
 # ==========================
-# FILTRO DE DATA (DETALHES)
+# FILTRO DE DATA DETALHADO
 # ==========================
 data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
-
 agendamentos = listar_agendamentos_por_data(data_str)
-total_atual = len(agendamentos)
-novos_agendamentos = total_atual > st.session_state["ultimo_total"]
-st.session_state["ultimo_total"] = total_atual
 
-if novos_agendamentos:
+if "ultimo_total" not in st.session_state:
+    st.session_state.ultimo_total = 0
+
+total_atual = len(agendamentos)
+novos = total_atual > st.session_state.ultimo_total
+st.session_state.ultimo_total = total_atual
+
+if novos:
     components.html("""
     <div class="toast">💈 Novo agendamento recebido!</div>
     <script>
@@ -189,66 +170,43 @@ col1, col2 = st.columns(2)
 with col1:
     hora_bloqueio = st.selectbox("Horário para bloquear", [f"{h:02d}:00" for h in range(9, 20)])
 with col2:
-    motivo = st.text_input("Motivo (opcional)", placeholder="Ex: Almoço, folga, manutenção...")
+    motivo = st.text_input("Motivo (opcional)", placeholder="Ex: Almoço, folga...")
 
 if st.button("Bloquear horário"):
-    ocupado = any(a["hora"] == hora_bloqueio for a in agendamentos)
-    if ocupado:
+    if any(a["hora"] == hora_bloqueio for a in agendamentos):
         st.error("⚠️ Este horário já está agendado ou bloqueado.")
     else:
         bloquear_horario(data_str, hora_bloqueio, motivo or "Bloqueado")
-        st.success(f"🚫 Horário {hora_bloqueio} bloqueado com sucesso!")
-        st.rerun()
+        st.success(f"🚫 Horário {hora_bloqueio} bloqueado!")
+        st.experimental_rerun()
 
 # ==========================
-# AGENDA VISUAL DETALHADA
+# LISTA DETALHADA
 # ==========================
 st.divider()
 st.markdown(f"### 🗓️ Agenda detalhada de {data_str}")
 st.markdown("<div class='agenda-container'>", unsafe_allow_html=True)
 
-horarios = [f"{h:02d}:00" for h in range(9, 20)]
-
-for hora in horarios:
+for h in [f"{x:02d}:00" for x in range(9, 20)]:
     st.markdown("<div class='agenda-bloco'>", unsafe_allow_html=True)
-    st.markdown(f"<span class='agenda-hora'>{hora}</span>", unsafe_allow_html=True)
-
-    agendamento = next((a for a in agendamentos if a["hora"] == hora), None)
-
-    if agendamento:
-        if agendamento.get("bloqueado"):
-            st.markdown(
-                f"""
-                <div class='bloqueado'>
-                    🛑 <strong>Horário bloqueado</strong><br>
-                    {agendamento.get("servico", "")}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            if st.button(f"🔓 Desbloquear {hora}", key=f"unblock_{hora}"):
-                cancelar_agendamento(agendamento["id"])
-                st.success(f"✅ Horário {hora} foi liberado.")
-                st.rerun()
+    st.markdown(f"<span class='agenda-hora'>{h}</span>", unsafe_allow_html=True)
+    ag = next((a for a in agendamentos if a["hora"] == h), None)
+    if ag:
+        if ag.get("bloqueado"):
+            st.markdown(f"<div class='bloqueado'>🛑 <strong>Horário bloqueado</strong><br>{ag.get('servico','')}</div>", unsafe_allow_html=True)
+            if st.button(f"🔓 Desbloquear {h}", key=f"u_{h}"):
+                cancelar_agendamento(ag["id"])
+                st.success(f"✅ Horário {h} liberado.")
+                st.experimental_rerun()
         else:
-            st.markdown(
-                f"""
-                <div class='ocupado'>
-                    <strong>{agendamento['nome']}</strong><br>
-                    ✂️ {agendamento['servico']} — 💰 R$ {agendamento['valor']},00<br>
-                    📞 {agendamento['telefone']}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            if st.button(f"❌ Cancelar {agendamento['nome']} - {hora}", key=f"cancel_{hora}"):
-                cancelar_agendamento(agendamento["id"])
-                st.warning(f"🚫 Agendamento de {agendamento['nome']} às {hora} foi cancelado.")
-                st.rerun()
+            st.markdown(f"<div class='ocupado'><strong>{ag['nome']}</strong><br>✂️ {ag['servico']} — 💰 R$ {ag['valor']},00<br>📞 {ag['telefone']}</div>", unsafe_allow_html=True)
+            if st.button(f"❌ Cancelar {ag['nome']} - {h}", key=f"c_{h}"):
+                cancelar_agendamento(ag["id"])
+                st.warning(f"🚫 Agendamento de {ag['nome']} às {h} cancelado.")
+                st.experimental_rerun()
     else:
         st.markdown("<span class='livre'>🕓 Horário livre</span>", unsafe_allow_html=True)
-
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda online com visual semanal, alertas e som automático</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda com login persistente, visual semanal e alertas</p>", unsafe_allow_html=True)
