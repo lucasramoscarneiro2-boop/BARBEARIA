@@ -178,6 +178,9 @@ st.markdown("""
     justify-content:center;
     gap:8px;
     font-weight:700;
+    font-size:1.1rem;  /* 🔹 reduz o tamanho da fonte */
+    white-space:nowrap; /* 🔹 evita quebra de linha */
+    margin-top:1rem;
 '>
 ✂️ <span>Escolha o serviço desejado</span>
 </h2>
