@@ -147,8 +147,8 @@ div[data-baseweb="select"] svg {
 
 # ==========================
 # CABEÇALHO
-st.image("imagens/file_000000006378720ea9a5538c00beeb39.png")
-st.markdown("<p style='text-align:center;'>Agende seu horário!</p>", unsafe_allow_html=True)
+st.image("imagens/file_000000007da0720eba94e26dada870da.png")
+st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
 # FUNÇÕES
@@ -169,7 +169,19 @@ def safe_image(path: Path):
 # ==========================
 # 1️⃣ Escolha do serviço
 # ==========================
-st.subheader("✂️ Escolha o serviço desejado")
+st.markdown("""
+<h2 style='
+    text-align:center;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:700;
+'>
+✂️ <span>Escolha o serviço desejado</span>
+</h2>
+""", unsafe_allow_html=True)
 
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
