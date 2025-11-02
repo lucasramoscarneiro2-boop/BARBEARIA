@@ -85,7 +85,7 @@ servicos = [
     ("Sombrancelha.png", "Sobrancelha", 15),
     ("Pezinho.png", "Pezinho e acabamento", 15),
     ("Kings Day.png", "King’s Day (Corte + Barba + Cera quente)", 95),
-    ("Corte barba alisamento sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
+    ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
 cols = st.columns(2)
