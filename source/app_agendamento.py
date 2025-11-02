@@ -10,12 +10,11 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# Caminho base das imagens (mantendo estrutura atual)
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
 
 # ==========================
-# FUNÇÕES
+# FUNÇÕES AUXILIARES
 # ==========================
 def horarios_disponiveis(data_str: str):
     agendamentos = listar_agendamentos_por_data(data_str)
@@ -25,7 +24,7 @@ def horarios_disponiveis(data_str: str):
     return [h for h in todos if h not in ocupados and h not in bloqueados]
 
 def image_to_base64(path: Path):
-    """Converte imagem local em base64 para exibir inline no HTML."""
+    """Converte imagem local em base64 (compatível com Streamlit Cloud)."""
     if not path.exists():
         return "https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel"
     try:
@@ -45,18 +44,19 @@ def scroll_to_anchor(anchor_id: str = "form-anchor"):
           if (el) el.scrollIntoView({{behavior:'smooth', block:'start'}});
           else setTimeout(go,120);
         }}
-        setTimeout(go,80);
+        setTimeout(go,100);
         </script>
         """,
         height=0,
     )
 
+# Se foi clicado, rola até o formulário
 if st.session_state.get("scroll_to_form"):
     scroll_to_anchor("form-anchor")
     st.session_state["scroll_to_form"] = False
 
 # ==========================
-# CSS
+# CSS GLOBAL
 # ==========================
 st.markdown("""
 <style>
@@ -74,21 +74,31 @@ h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
   padding: 1rem;
   margin-bottom: 1.3rem;
   text-align: center;
-  box-shadow: 0 3px 10px rgba(0,0,0,.08);
   transition: all 0.25s ease;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
+  box-shadow: 0 3px 10px rgba(0,0,0,.08);
 }
 .servico-card:hover {
   transform: scale(1.03);
-  border-color: #007bff;
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
 }
+.servico-card.selecionado {
+  border: 3px solid #007bff;
+  box-shadow: 0 0 12px rgba(0,123,255,0.5);
+  animation: pulseBorder 1.4s infinite;
+}
+@keyframes pulseBorder {
+  0% { box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+  50% { box-shadow: 0 0 20px rgba(0,123,255,0.9); }
+  100% { box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+}
+
 .servico-img {
   border-radius: 14px;
   width: 100%;
   height: auto;
   object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0,0,0,.12);
 }
 .servico-nome {
   margin-top: .6rem;
@@ -113,7 +123,7 @@ st.title("💈 Barbearia Cardoso 💈")
 st.markdown("<p style='text-align:center;'>Agende seu horário rapidamente no seu celular!</p>", unsafe_allow_html=True)
 
 # ==========================
-# 1️⃣ Escolha do serviço
+# 1️⃣ ESCOLHA DO SERVIÇO
 # ==========================
 st.subheader("✂️ Escolha o serviço desejado")
 
@@ -131,48 +141,43 @@ servicos = [
     ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
+# Inicializa estado
+if "servico" not in st.session_state:
+    st.session_state["servico"] = None
+    st.session_state["valor"] = None
+
 col1, col2 = st.columns(2)
 for i, (img_name, nome, valor) in enumerate(servicos):
     with (col1 if i % 2 == 0 else col2):
-        img_base64 = image_to_base64(IMAGES_DIR / img_name)
+        img_b64 = image_to_base64(IMAGES_DIR / img_name)
+        selecionado = st.session_state["servico"] == nome
+        classe = "servico-card selecionado" if selecionado else "servico-card"
+
         html = f"""
-        <div class="servico-card" onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
-            <img class="servico-img" src="{img_base64}" alt="{nome}">
+        <div class="{classe}" onclick="window.parent.postMessage({{'click': '{nome}'}}, '*')">
+            <img class="servico-img" src="{img_b64}" alt="{nome}">
             <div class="servico-nome">{nome}</div>
             <div class="servico-preco">R$ {valor},00</div>
         </div>
         """
+        if st.button(f"btn_{i}", key=f"btn_{i}", label_visibility="collapsed"):
+            st.session_state["servico"] = nome
+            st.session_state["valor"] = valor
+            st.session_state["scroll_to_form"] = True
+            st.rerun()
         st.markdown(html, unsafe_allow_html=True)
 
-components.html("""
-<script>
-window.addEventListener('message', (event) => {
-  if (event.data.servico) {
-    const params = new URLSearchParams();
-    params.set("servico", event.data.servico);
-    params.set("valor", event.data.valor);
-    window.parent.location.search = params.toString();
-  }
-});
-</script>
-""", height=0)
-
-params = st.experimental_get_query_params()
-if "servico" in params:
-    st.session_state["servico"] = params["servico"][0]
-    st.session_state["valor"] = float(params["valor"][0])
-    st.session_state["scroll_to_form"] = True
-    st.rerun()
-
 # ==========================
-# 2️⃣ Dados do cliente
+# 2️⃣ DADOS DO CLIENTE
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
-if "servico" not in st.session_state:
+
+if not st.session_state["servico"]:
     st.warning("👈 Escolha um serviço antes de continuar.")
     st.stop()
 
 st.success(f"Serviço selecionado: {st.session_state['servico']} (R$ {st.session_state['valor']},00)")
+
 st.divider()
 st.subheader("📋 Informe seus dados")
 
@@ -191,7 +196,10 @@ else:
             st.warning("Preencha todos os campos.")
         else:
             inserir_agendamento(
-                nome, telefone, data_str, hora,
+                nome,
+                telefone,
+                data_str,
+                hora,
                 st.session_state["servico"],
                 st.session_state["valor"]
             )
