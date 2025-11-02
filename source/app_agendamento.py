@@ -147,9 +147,8 @@ div[data-baseweb="select"] svg {
 
 # ==========================
 # CABEÇALHO
-# ==========================
-st.title("💈 Barbearia Cardoso 💈")
-st.markdown("<p style='text-align:center;'>Agende seu horário rapidamente no seu celular!</p>", unsafe_allow_html=True)
+st.image("imagens/file_000000006378720ea9a5538c00beeb39.png")
+st.markdown("<p style='text-align:center;'>Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
 # FUNÇÕES
