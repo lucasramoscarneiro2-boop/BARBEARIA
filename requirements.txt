@@ -1,19 +1,5 @@
-# --- Framework principal ---
 streamlit==1.38.0
-
-# --- Banco de dados Supabase/Postgres ---
-supabase==2.5.1
 pg8000==1.31.2
-sqlalchemy==2.0.35
-
-# --- Manipulação de dados e datas ---
 pandas==2.2.2
 python-dateutil==2.9.0
 requests==2.32.3
-
-# --- Dependências auxiliares ---
-typing-extensions>=4.12.0
-charset-normalizer>=3.3.2
-idna>=3.7
-urllib3>=2.2.3
-certifi>=2024.7.4
