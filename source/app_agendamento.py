@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from datetime import datetime
 from pathlib import Path
+import locale
 from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 
 # ==========================
@@ -21,12 +22,21 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Força idioma do calendário e data para português
+try:
+    locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_TIME, "pt_BR")
+    except Exception:
+        pass
+
 # Caminhos
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
 
 # ==========================
-# CSS
+# CSS GLOBAL
 # ==========================
 st.markdown("""
 <style>
@@ -36,7 +46,7 @@ body, .stApp {
   color: #ffffff !important;
 }
 
-/* Força cor branca em todos os títulos */
+/* Força cor branca em títulos, labels e textos */
 h1, h2, h3, h4, label, p, span, div, strong {
   color: #ffffff !important;
 }
@@ -105,16 +115,34 @@ input:focus, textarea:focus {
   box-shadow: 0 0 6px rgba(0,180,216,0.4);
 }
 
-/* Corrige selectbox de horário */
+/* Selectbox (corrige invisibilidade em celulares) */
 [data-baseweb="select"] > div {
-  background-color: #fff !important;
-  color: #000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
   border-radius: 10px !important;
-  border: 1.5px solid #ccc !important;
+  border: 2px solid #00b4d8 !important;
   padding: 0.6rem 0.6rem !important;
+  min-height: 48px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+[data-baseweb="select"] div[role="option"],
+[data-baseweb="select"] div[role="button"],
+[data-baseweb="select"] * {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+[data-baseweb="select"] input {
+  height: auto !important;
+  min-height: 1.2rem !important;
+  padding: 0 !important;
+  opacity: 1 !important;
 }
 [data-baseweb="select"] svg {
   color: #00b4d8 !important;
+  opacity: 1 !important;
 }
 
 /* Mobile */
@@ -136,9 +164,10 @@ st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe
 # FUNÇÕES AUXILIARES
 # ==========================
 def horarios_disponiveis(data_str: str):
+    """Gera lista de horários livres no formato HH:MM"""
     agendamentos = listar_agendamentos_por_data(data_str)
-    ocupados = {a.get("hora") for a in agendamentos if not a.get("bloqueado")}
-    bloqueados = {a.get("hora") for a in agendamentos if a.get("bloqueado")}
+    ocupados = {str(a.get("hora")).zfill(5) for a in agendamentos if not a.get("bloqueado")}
+    bloqueados = {str(a.get("hora")).zfill(5) for a in agendamentos if a.get("bloqueado")}
     todos = [f"{h:02d}:00" for h in range(9, 19)]
     return [h for h in todos if h not in ocupados and h not in bloqueados]
 
@@ -152,20 +181,7 @@ def safe_image(path: Path):
 # ESCOLHA DO SERVIÇO
 # ==========================
 st.markdown("""
-<style>
-.titulo-servico {
-    text-align: center;
-    color: white !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-weight: 700;
-    font-size: 0.8rem;
-    margin-top: 1rem;
-}
-</style>
-<h2 class="titulo-servico">✂️ <span>Escolha o serviço desejado</span></h2>
+<h2 style="text-align:center; color:white;">✂️ Escolha o serviço desejado</h2>
 """, unsafe_allow_html=True)
 
 servicos = [
@@ -195,14 +211,14 @@ for i, (img_name, nome, valor) in enumerate(servicos):
             st.session_state["valor"] = valor
             st.session_state["scroll_to_form"] = True
             st.rerun()
-
         st.markdown('</div>', unsafe_allow_html=True)
+
 # ==========================
 # FORMULÁRIO DO CLIENTE
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
-# Scroll automático ao selecionar serviço
+# Scroll automático ao selecionar o serviço
 if st.session_state.get("scroll_to_form"):
     components.html("""
         <script>
@@ -223,53 +239,11 @@ st.subheader("📋 Informe seus dados")
 nome = st.text_input("Seu nome completo")
 telefone = st.text_input("Seu WhatsApp (ex: 11 99999-9999)")
 
-# 📅 Campo de data em formato brasileiro
+# 📅 Data com formato brasileiro e calendário em português
 data = st.date_input("Escolha o dia", format="DD/MM/YYYY")
 data_str = data.strftime("%d/%m/%Y")
 
-# Corrige visual do selectbox de horário
-
-# --- estilos para o selectbox de horário (corrige invisibilidade) ---
-st.markdown("""
-<style>
-/* Caixa visível e confortável */
-[data-baseweb="select"] > div {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border-radius: 10px !important;
-  border: 2px solid #00b4d8 !important;
-  padding: 0.6rem 0.6rem !important;
-  min-height: 48px !important;
-  font-weight: 600 !important;
-  font-size: 1rem !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Texto sempre visível (corrige tema escuro de celular) */
-[data-baseweb="select"] div[role="option"],
-[data-baseweb="select"] div[role="button"],
-[data-baseweb="select"] * {
-  color: #000000 !important;
-  background-color: #ffffff !important;
-}
-
-/* Remove campo interno invisível */
-[data-baseweb="select"] input {
-  height: auto !important;
-  min-height: 1.2rem !important;
-  padding: 0 !important;
-  opacity: 1 !important;
-}
-
-/* Aumenta o contraste da setinha */
-[data-baseweb="select"] svg {
-  color: #00b4d8 !important;
-  opacity: 1 !important;
-}
-</style>
-""", unsafe_allow_html=True)
-# Horários disponíveis
+# 🕒 Horário (corrigido e visível)
 disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
