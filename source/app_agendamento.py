@@ -108,46 +108,54 @@ servicos = [
     ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
-# Renderização responsiva
+# Layout de 2 colunas
 col1, col2 = st.columns(2)
 
+# --- Cria os cards clicáveis ---
 for i, (img_name, nome, valor) in enumerate(servicos):
     is_selected = (
         "servico" in st.session_state
         and st.session_state["servico"] == nome
     )
+
     border_color = "#007bff" if is_selected else "#ccc"
-    box_shadow = "0 0 15px rgba(0,123,255,0.4)" if is_selected else "0 2px 10px rgba(0,0,0,.05)"
+    shadow = "0 0 15px rgba(0,123,255,0.4)" if is_selected else "0 2px 10px rgba(0,0,0,.05)"
 
     with (col1 if i % 2 == 0 else col2):
         st.markdown(
             f"""
-            <div onclick="window.parent.postMessage({{'event':'select','servico':'{nome}','valor':{valor}}}, '*')"
-                 style="cursor:pointer; border:3px solid {border_color};
-                 border-radius:18px; padding:1rem; margin-bottom:1.2rem;
-                 background:rgba(255,255,255,0.95); box-shadow:{box_shadow};
-                 text-align:center; transition:transform .25s ease, box-shadow .25s ease, border .25s ease;"
-                 onmouseover="this.style.transform='scale(1.03)';"
-                 onmouseout="this.style.transform='scale(1.00)';">
-                <img src="imagens/{img_name}" alt="{nome}" style="width:100%;
-                     border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" />
-                <div style="padding-top:0.5rem;">
-                    <h4 style="margin:0; font-size:1.1rem; color:#111;">{nome}</h4>
-                    <p style="margin:0; color:#007bff; font-weight:600;">R$ {valor:.2f}</p>
-                </div>
+            <div id="card_{i}" style="
+                cursor:pointer;
+                border:3px solid {border_color};
+                border-radius:16px;
+                padding:1rem;
+                margin-bottom:1.2rem;
+                background:rgba(255,255,255,0.97);
+                box-shadow:{shadow};
+                transition: all 0.25s ease;
+                text-align:center;"
+                onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
+
+                <img src="https://raw.githubusercontent.com/lucasramoscarneiro/BARBEARIA/main/IMAGENS/{img_name}"
+                     alt="{nome}" style="width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
+
+                <h4 style="margin-top:0.6rem; color:#111;">{nome}</h4>
+                <p style="margin:0; font-weight:600; color:#007bff;">R$ {valor:.2f}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-# --- Captura o clique no card ---
+# --- Captura o clique no card via JS bridge ---
 components.html(
     """
     <script>
-    window.addEventListener('message', (e) => {
-        if (e.data.event === 'select') {
-            const streamlitEvent = new CustomEvent('streamlit:setComponentValue', {detail: e.data});
-            window.parent.document.dispatchEvent(streamlitEvent);
+    window.addEventListener('message', (event) => {
+        if (event.data.servico) {
+            const params = new URLSearchParams();
+            params.set("servico", event.data.servico);
+            params.set("valor", event.data.valor);
+            window.parent.location.search = params.toString();
         }
     });
     </script>
@@ -155,17 +163,13 @@ components.html(
     height=0,
 )
 
-# --- Detecta o evento no backend ---
-event = st.experimental_get_query_params()
-if "_component_value" in event:
-    try:
-        data = eval(event["_component_value"][0])
-        st.session_state["servico"] = data["servico"]
-        st.session_state["valor"] = data["valor"]
-        st.session_state["scroll_to_form"] = True
-        st.rerun()
-    except Exception:
-        pass
+# --- Detecta o clique no backend e atualiza sessão ---
+params = st.experimental_get_query_params()
+if "servico" in params:
+    st.session_state["servico"] = params["servico"][0]
+    st.session_state["valor"] = float(params["valor"][0])
+    st.session_state["scroll_to_form"] = True
+    st.rerun()
 # ==========================
 # 2️⃣ Dados do cliente (âncora + scroll)
 # ==========================
