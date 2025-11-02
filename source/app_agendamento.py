@@ -9,11 +9,37 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# Caminhos robustos (repo_root -> where /source vive)
+# Caminhos robustos
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
 
-# CSS customizado
+# --- Scroll helper (funciona no Streamlit Cloud e mobile) ---
+def scroll_to_anchor(anchor_id: str = "form-anchor"):
+    components.html(
+        f"""
+        <script>
+        function go() {{
+          const el = window.parent.document.querySelector("#{anchor_id}");
+          if (el) {{
+            el.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+          }} else {{
+            setTimeout(go, 120);
+          }}
+        }}
+        setTimeout(go, 80);
+        </script>
+        """,
+        height=0,
+    )
+
+# Se veio de um clique de serviço, aciona scroll no início
+if st.session_state.get("scroll_to_form"):
+    scroll_to_anchor("form-anchor")
+    st.session_state["scroll_to_form"] = False
+
+# ==========================
+# CSS E TÍTULOS
+# ==========================
 st.markdown("""
 <style>
 body, .stApp { background-color: #f5f6fa; font-family: 'Poppins', sans-serif; color: #222; }
@@ -50,7 +76,6 @@ st.markdown("<p style='text-align:center;'>Agende seu horário rapidamente no se
 # FUNÇÕES
 # ==========================
 def horarios_disponiveis(data_str: str):
-    """Retorna horários livres baseados no Supabase."""
     agendamentos = listar_agendamentos_por_data(data_str)
     ocupados = {a.get("hora") for a in agendamentos if not a.get("bloqueado")}
     bloqueados = {a.get("hora") for a in agendamentos if a.get("bloqueado")}
@@ -58,7 +83,6 @@ def horarios_disponiveis(data_str: str):
     return [h for h in todos if h not in ocupados and h not in bloqueados]
 
 def safe_image(path: Path):
-    """Carrega imagem com fallback, evitando quebra por nome com espaços."""
     if path.exists():
         st.image(str(path), use_column_width=True)
     else:
@@ -87,31 +111,21 @@ col1, col2 = st.columns(2)
 for i, (img_name, nome, valor) in enumerate(servicos):
     with (col1 if i % 2 == 0 else col2):
         st.markdown('<div class="servico-card">', unsafe_allow_html=True)
-        safe_image(IMAGES_DIR / img_name)  # ✅ funciona com espaços no nome
+        safe_image(IMAGES_DIR / img_name)
         st.markdown(f'<div class="servico-nome">{nome}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="servico-preco">R$ {valor},00</div>', unsafe_allow_html=True)
 
         if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
-            # marca para rolar e rerender imediato (garante execução do JS)
             st.session_state["scroll_to_form"] = True
-            st.rerun()
+            st.experimental_rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
-# 2️⃣ Formulário (âncora + scroll confiável)
+# 2️⃣ Dados do cliente (âncora + scroll)
 # ==========================
-# Âncora do formulário
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
-
-# Se precisamos rolar, roda JS via components (funciona no Cloud)
-if st.session_state.get("scroll_to_form", False):
-    components.html(
-        "<script>location.hash = '#form-anchor';</script>",
-        height=0, width=0
-    )
-    st.session_state["scroll_to_form"] = False
 
 if "servico" not in st.session_state:
     st.warning("👈 Escolha um serviço antes de continuar.")
@@ -119,9 +133,6 @@ if "servico" not in st.session_state:
 
 st.success(f"Serviço selecionado: {st.session_state['servico']} (R$ {st.session_state['valor']},00)")
 
-# ==========================
-# 3️⃣ Dados do cliente
-# ==========================
 st.divider()
 st.subheader("📋 Informe seus dados")
 
