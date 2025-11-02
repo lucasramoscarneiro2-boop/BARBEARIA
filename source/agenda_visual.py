@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import date, timedelta
 import streamlit.components.v1 as components
 from streamlit_calendar import calendar
+from time import time
 from db_supabase import (
     listar_agendamentos_por_data,
     cancelar_agendamento,
@@ -93,6 +94,8 @@ if "senha" not in st.session_state:
     st.session_state.senha = ""
 if "ultimo_total" not in st.session_state:
     st.session_state.ultimo_total = 0
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time()
 
 if not st.session_state.autenticado:
     st.subheader("🔐 Login do barbeiro")
@@ -111,21 +114,17 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# AUTOATUALIZAÇÃO
+# AUTOATUALIZAÇÃO SUAVE
 # ==========================
 REFRESH_INTERVAL = 60  # segundos
+if time() - st.session_state.last_refresh > REFRESH_INTERVAL:
+    st.session_state.last_refresh = time()
+    st.experimental_rerun()
+
 colA, colB, colC = st.columns([1,1,1])
 with colB:
     if st.button("🔄 Atualizar agora"):
         st.rerun()
-
-components.html(f"""
-<script>
-  setTimeout(() => {{
-    window.parent.location.reload();
-  }}, {REFRESH_INTERVAL * 1000});
-</script>
-""", height=0)
 
 # ==========================
 # CALENDÁRIO SEMANAL VISUAL
