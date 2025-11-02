@@ -197,13 +197,12 @@ for i, (img_name, nome, valor) in enumerate(servicos):
             st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
-
 # ==========================
-# FORMULÁRIO
+# FORMULÁRIO DO CLIENTE
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
-# Rola suavemente até o formulário após selecionar serviço
+# Scroll automático ao selecionar serviço
 if st.session_state.get("scroll_to_form"):
     components.html("""
         <script>
@@ -223,15 +222,37 @@ st.subheader("📋 Informe seus dados")
 
 nome = st.text_input("Seu nome completo")
 telefone = st.text_input("Seu WhatsApp (ex: 11 99999-9999)")
-data = st.date_input("Escolha o dia")
+
+# 📅 Campo de data em formato brasileiro
+data = st.date_input("Escolha o dia", format="DD/MM/YYYY")
 data_str = data.strftime("%d/%m/%Y")
 
-# Corrige selectbox de horário
+# Corrige visual do selectbox de horário
+st.markdown("""
+<style>
+[data-baseweb="select"] > div {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #ccc !important;
+  padding: 0.6rem 0.6rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4rem !important;
+  min-height: 48px !important;
+  text-align: left !important;
+  display: flex !important;
+  align-items: center !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Horários disponíveis
 disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
 else:
     hora = st.selectbox("Escolha o horário", disponiveis, key="hora_select")
+
     if st.button("✅ Confirmar agendamento", type="primary"):
         if not nome or not telefone or not hora:
             st.warning("⚠️ Preencha todos os campos antes de confirmar.")
