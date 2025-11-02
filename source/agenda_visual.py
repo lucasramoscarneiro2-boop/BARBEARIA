@@ -1,7 +1,6 @@
 import streamlit as st
 from datetime import date, timedelta
 import streamlit.components.v1 as components
-from streamlit_calendar import calendar
 from time import time
 import hashlib
 from db_supabase import (
@@ -65,7 +64,6 @@ if "usuario" not in st.session_state:
 if "token" not in st.session_state:
     st.session_state.token = None
 
-# se já há token na URL, reaplica
 params = st.experimental_get_query_params()
 if "token" in params and not st.session_state.autenticado:
     st.session_state.autenticado = True
@@ -105,42 +103,42 @@ with colB:
         st.rerun()
 
 # ==========================
-# CALENDÁRIO SEMANAL
+# RESUMO SEMANAL
 # ==========================
 st.divider()
-st.subheader("📆 Visualização semanal da agenda")
+st.subheader("📊 Resumo da Semana")
 
 hoje = date.today()
 inicio_semana = hoje - timedelta(days=hoje.weekday())
-fim_semana = inicio_semana + timedelta(days=6)
+dias_semana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
-eventos = []
-for i in range(7):
+dados_semana = []
+for i, nome_dia in enumerate(dias_semana):
     data = (inicio_semana + timedelta(days=i)).strftime("%d/%m/%Y")
-    for ag in listar_agendamentos_por_data(data):
-        cor = "#1b9e77" if not ag.get("bloqueado") else "#d73027"
-        eventos.append({
-            "title": f"{ag['hora']} {ag['nome']} ({ag['servico']})",
-            "start": f"2025-{data[3:5]}-{data[0:2]}",
-            "color": cor,
-        })
+    total = len(listar_agendamentos_por_data(data))
+    dados_semana.append((nome_dia, total))
 
-calendar_options = {
-    "initialView": "dayGridWeek",
-    "locale": "pt-br",
-    "height": 650,
-    "headerToolbar": {
-        "left": "prev,next today",
-        "center": "title",
-        "right": "dayGridMonth,dayGridWeek,dayGridDay"
-    },
-}
-calendar(events=eventos, options=calendar_options)
+colunas = st.columns(7)
+for i, (dia, total) in enumerate(dados_semana):
+    with colunas[i]:
+        cor = "#00bfff" if total > 0 else "#555"
+        st.markdown(
+            f"""
+            <div style='background-color:#1a1a1a;padding:10px;border-radius:10px;text-align:center;'>
+                <p style='margin:0;color:{cor};font-weight:bold;'>{dia[:3]}</p>
+                <p style='font-size:1.2rem;margin:0;color:white;'>{total}</p>
+                <p style='margin:0;color:gray;font-size:0.8rem;'>agendamentos</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 # ==========================
 # FILTRO DE DATA DETALHADO
 # ==========================
-data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
+st.divider()
+st.subheader("📅 Detalhamento do Dia")
+data_filtro = st.date_input("Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
 agendamentos = listar_agendamentos_por_data(data_str)
 
@@ -209,4 +207,4 @@ for h in [f"{x:02d}:00" for x in range(9, 20)]:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda com login persistente, visual semanal e alertas</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda com resumo semanal, login persistente e alertas</p>", unsafe_allow_html=True)
