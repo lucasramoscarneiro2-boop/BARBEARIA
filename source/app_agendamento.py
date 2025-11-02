@@ -242,17 +242,20 @@ if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
 else:
     hora = st.selectbox("Escolha o horário", disponiveis, key="hora_select")
+
     if st.button("✅ Confirmar agendamento", type="primary"):
-        if not nome or not telefone:
-            st.warning("Preencha todos os campos.")
+        hora_selecionada = st.session_state.get("hora_select", hora)
+
+        if not nome or not telefone or not hora_selecionada:
+            st.warning("⚠️ Preencha todos os campos antes de confirmar.")
         else:
             inserir_agendamento(
                 nome,
                 telefone,
                 data_str,
-                hora,
+                hora_selecionada,
                 st.session_state["servico"],
                 st.session_state["valor"]
             )
-            st.success(f"✅ Agendamento confirmado para {data_str} às {hora}!")
+            st.success(f"✅ Agendamento confirmado para {data_str} às {hora_selecionada}!")
             st.balloons()
