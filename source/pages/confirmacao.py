@@ -71,6 +71,6 @@ else:
     st.error("Nenhum agendamento encontrado.")
 
 if st.button("⬅️ Voltar para o início"):
-    st.switch_page("source/agendamento.py")
+    st.switch_page("agendamento.py")
 
 st.markdown("</div>", unsafe_allow_html=True)
