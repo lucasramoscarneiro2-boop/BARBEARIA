@@ -1,5 +1,5 @@
 import streamlit as st
-from datetime import datetime, date
+from datetime import date
 import streamlit.components.v1 as components
 from db_supabase import (
     listar_agendamentos_por_data,
@@ -7,6 +7,7 @@ from db_supabase import (
     bloquear_horario,
     autenticar
 )
+from streamlit_autorefresh import st_autorefresh
 
 # ==========================
 # CONFIGURAÇÃO GERAL
@@ -84,24 +85,27 @@ st.title("💇‍♂️ Agenda do Barbeiro")
 st.markdown("Gerencie seus horários — veja agendamentos, bloqueie ou libere horários")
 
 # ==========================
-# LOGIN PERSISTENTE
+# LOGIN PERSISTENTE (sem query params)
 # ==========================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
-
-params = st.experimental_get_query_params()
-if "usuario" in params and not st.session_state.autenticado:
-    st.session_state.autenticado = True
+if "usuario" not in st.session_state:
+    st.session_state.usuario = ""
+if "senha" not in st.session_state:
+    st.session_state.senha = ""
+if "ultimo_total" not in st.session_state:
+    st.session_state.ultimo_total = 0
 
 if not st.session_state.autenticado:
     st.subheader("🔐 Login do barbeiro")
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type="password")
+    usuario = st.text_input("Usuário", value=st.session_state.usuario)
+    senha = st.text_input("Senha", type="password", value=st.session_state.senha)
 
     if st.button("Entrar"):
         if autenticar(usuario, senha):
             st.session_state.autenticado = True
-            st.experimental_set_query_params(usuario=usuario)
+            st.session_state.usuario = usuario
+            st.session_state.senha = senha
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
         else:
@@ -109,12 +113,14 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# ATUALIZAÇÃO AUTOMÁTICA
+# AUTOATUALIZAÇÃO SEGURA
 # ==========================
 REFRESH_INTERVAL = 60  # segundos
-if "ultimo_total" not in st.session_state:
-    st.session_state["ultimo_total"] = 0
+st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="auto_refresh_key")
 
+# ==========================
+# FILTRO DE DATA E AGENDAMENTOS
+# ==========================
 data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
 
@@ -125,7 +131,7 @@ total_atual = len(agendamentos)
 novos_agendamentos = total_atual > st.session_state["ultimo_total"]
 st.session_state["ultimo_total"] = total_atual
 
-# 🔔 Toast visual com efeito e som
+# 🔔 Toast visual + som ao receber novo agendamento
 if novos_agendamentos:
     components.html("""
     <div class="toast">💈 Novo agendamento recebido!</div>
@@ -134,15 +140,6 @@ if novos_agendamentos:
     audio.play();
     </script>
     """, height=0)
-
-# Atualização automática sem perder login
-components.html(f"""
-<script>
-setTimeout(() => {{
-    window.parent.location.reload();
-}}, {REFRESH_INTERVAL * 1000});
-</script>
-""", height=0)
 
 # ==========================
 # BLOQUEAR HORÁRIO
