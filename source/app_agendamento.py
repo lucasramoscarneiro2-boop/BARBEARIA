@@ -44,7 +44,7 @@ st.markdown("""
 <style>
 /* === FUNDO E TEMA GERAL === */
 body, .stApp {
-  background-color: #0d1b2a; /* azul escuro elegante */
+  background-color: #0b1a3a; /* azul escuro elegante */
   font-family: 'Poppins', sans-serif;
   color: #f5f6fa; /* texto claro */
 }
@@ -169,6 +169,7 @@ def safe_image(path: Path):
 # ==========================
 # 1️⃣ Escolha do serviço
 # ==========================
+
 st.markdown("""
 <h2 style='
     text-align:center;
@@ -176,16 +177,15 @@ st.markdown("""
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:8px;
+    gap:6px;
     font-weight:700;
-    font-size:1.1rem;  /* 🔹 reduz o tamanho da fonte */
-    white-space:nowrap; /* 🔹 evita quebra de linha */
-    margin-top:1rem;
+    font-size:0.95rem;   /* 🔹 menor para caber numa linha */
+    white-space:nowrap;  /* 🔹 impede quebra de linha */
+    margin-top:0.8rem;
 '>
 ✂️ <span>Escolha o serviço desejado</span>
 </h2>
 """, unsafe_allow_html=True)
-
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
     ("Barba.png", "Barba", 35),
