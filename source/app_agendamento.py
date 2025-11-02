@@ -9,16 +9,15 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# === OCULTAR LOGO GITHUB, FOOTER E MENU PADRÃO DO STREAMLIT ===
+# === OCULTAR LOGO GITHUB, FOOTER E MENU PADRÃO ===
 st.markdown("""
 <style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-[data-testid="stToolbar"] {visibility: hidden !important;}
-[data-testid="stDecoration"] {display: none !important;}
-[data-testid="stStatusWidget"] {display: none !important;}
-[data-testid="stSidebarCollapseButton"] {display: none !important;}
+#MainMenu, footer, header, [data-testid="stToolbar"], 
+[data-testid="stDecoration"], [data-testid="stStatusWidget"], 
+[data-testid="stSidebarCollapseButton"] {
+    visibility: hidden !important;
+    display: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -26,32 +25,8 @@ header {visibility: hidden;}
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
 
-# --- Scroll helper (funciona no Streamlit Cloud e mobile) ---
-def scroll_to_anchor(anchor_id: str = "form-anchor"):
-    components.html(
-        f"""
-        <script>
-        function go() {{
-          const el = window.parent.document.querySelector("#{anchor_id}");
-          if (el) {{
-            el.scrollIntoView({{behavior: 'smooth', block: 'start'}});
-          }} else {{
-            setTimeout(go, 120);
-          }}
-        }}
-        setTimeout(go, 80);
-        </script>
-        """,
-        height=0,
-    )
-
-# Se veio de um clique de serviço, aciona scroll no início
-if st.session_state.get("scroll_to_form"):
-    scroll_to_anchor("form-anchor")
-    st.session_state["scroll_to_form"] = False
-
 # ==========================
-# CSS E TÍTULOS
+# CSS PERSONALIZADO
 # ==========================
 st.markdown("""
 <style>
@@ -61,7 +36,7 @@ body, .stApp {
   color: #f5f6fa;
 }
 
-/* === CABEÇALHOS === */
+/* Cabeçalhos */
 h1, h2, h3, h4 {
   text-align: center;
   color: #ffffff;
@@ -69,7 +44,7 @@ h1, h2, h3, h4 {
 h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 h2, h3 { font-size: 1.4rem !important; }
 
-/* === BOTÕES === */
+/* Botões */
 .stButton>button {
   width: 100%;
   border-radius: 12px;
@@ -85,7 +60,7 @@ h2, h3 { font-size: 1.4rem !important; }
   transform: scale(1.03);
 }
 
-/* === CARDS DOS SERVIÇOS === */
+/* Cards dos serviços */
 .servico-card {
   background: #1b263b;
   border-radius: 16px;
@@ -118,7 +93,7 @@ h2, h3 { font-size: 1.4rem !important; }
   margin-bottom: .5rem;
 }
 
-/* === CAMPOS DE TEXTO === */
+/* Campos de texto */
 input, textarea, select {
   color: #000 !important;
   background-color: #fdfdfd !important;
@@ -136,19 +111,20 @@ input:focus, textarea:focus {
   color: #555 !important;
 }
 
-/* === SELECTBOX (horário) === */
-div[data-baseweb="select"] > div {
+/* Ajuste visual do selectbox */
+[data-baseweb="select"] > div {
   background-color: #fff !important;
   color: #000 !important;
   border-radius: 10px !important;
   border: 1.5px solid #ccc !important;
-  padding: 0.4rem 0.6rem !important;
+  padding: 0.6rem 0.6rem !important;
+  font-weight: 500;
 }
-div[data-baseweb="select"] svg {
+[data-baseweb="select"] svg {
   color: #00b4d8 !important;
 }
 
-/* === MOBILE === */
+/* Mobile */
 @media (max-width: 768px) {
   .block-container { padding: .5rem 1rem !important; }
   h1 { font-size: 1.4rem !important; }
@@ -180,7 +156,7 @@ def safe_image(path: Path):
         st.image("https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel", use_column_width=True)
 
 # ==========================
-# 1️⃣ ESCOLHA DE SERVIÇO
+# ESCOLHA DO SERVIÇO
 # ==========================
 st.markdown("""
 <style>
@@ -192,8 +168,7 @@ st.markdown("""
     justify-content: center;
     gap: 6px;
     font-weight: 700;
-    font-size: 0.7rem; /* 50% menor */
-    white-space: nowrap;
+    font-size: 0.7rem;
     margin-top: 1rem;
 }
 </style>
@@ -221,6 +196,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         safe_image(IMAGES_DIR / img_name)
         st.markdown(f'<div class="servico-nome">{nome}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="servico-preco">R$ {valor},00</div>', unsafe_allow_html=True)
+
         if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
@@ -229,10 +205,8 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
-# 2️⃣ FORMULÁRIO CLIENTE
+# FORMULÁRIO CLIENTE
 # ==========================
-st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
-
 if "servico" not in st.session_state:
     st.warning("👈 Escolha um serviço antes de continuar.")
     st.stop()
@@ -252,13 +226,12 @@ if not disponiveis:
 else:
     hora = st.selectbox("Escolha o horário", disponiveis, key="hora_select")
     if st.button("✅ Confirmar agendamento", type="primary"):
-        hora_selecionada = st.session_state.get("hora_select", hora)
-        if not nome or not telefone or not hora_selecionada:
+        if not nome or not telefone or not hora:
             st.warning("⚠️ Preencha todos os campos antes de confirmar.")
         else:
             inserir_agendamento(
-                nome, telefone, data_str, hora_selecionada,
+                nome, telefone, data_str, hora,
                 st.session_state["servico"], st.session_state["valor"]
             )
-            st.success(f"✅ Agendamento confirmado para {data_str} às {hora_selecionada}!")
+            st.success(f"✅ Agendamento confirmado para {data_str} às {hora}!")
             st.balloons()
