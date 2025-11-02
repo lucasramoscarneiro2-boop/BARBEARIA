@@ -70,7 +70,7 @@ h2, h3 { font-size: 1.4rem !important; }
 """, unsafe_allow_html=True)
 
 st.title("💈 Barbearia Cardoso 💈")
-st.markdown("<p style='text-align:center;'>Agende seu horário rapidamente no seu celular!</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
 # FUNÇÕES
@@ -136,7 +136,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
                 text-align:center;"
                 onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
 
-                <img src="https://raw.githubusercontent.com/lucasramoscarneiro/BARBEARIA/main/IMAGENS/{img_name}"
+                <img src="https://raw.githubusercontent.com/lucasramoscarneiro/BARBEARIA/main/imagens/{img_name}"
                      alt="{nome}" style="width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
 
                 <h4 style="margin-top:0.6rem; color:#111;">{nome}</h4>
