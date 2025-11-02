@@ -45,9 +45,13 @@ body, .stApp {
   font-family: 'Poppins', sans-serif;
   color: #ffffff !important;
 }
+
+/* Títulos e textos */
 h1, h2, h3, h4, label, p, span, div, strong {
   color: #ffffff !important;
 }
+
+/* Botões */
 .stButton>button {
   width: 100%;
   border-radius: 12px;
@@ -62,6 +66,8 @@ h1, h2, h3, h4, label, p, span, div, strong {
   background: linear-gradient(90deg, #0096c7, #023e8a);
   transform: scale(1.03);
 }
+
+/* Cards de serviços */
 .servico-card {
   background: #1b263b;
   border-radius: 16px;
@@ -93,6 +99,8 @@ h1, h2, h3, h4, label, p, span, div, strong {
   font-size: 1rem;
   margin-bottom: .5rem;
 }
+
+/* Campos */
 input, textarea, select {
   color: #000 !important;
   background-color: #fdfdfd !important;
@@ -101,6 +109,13 @@ input, textarea, select {
   border: 1.5px solid #ccc !important;
   padding: 0.6rem 0.8rem !important;
 }
+input:focus, textarea:focus {
+  border-color: #00b4d8 !important;
+  outline: none !important;
+  box-shadow: 0 0 6px rgba(0,180,216,0.4);
+}
+
+/* Selectbox (visível em celular e Safari) */
 [data-baseweb="select"] > div {
   background-color: #ffffff !important;
   color: #000000 !important;
@@ -121,6 +136,13 @@ input, textarea, select {
   color: #00b4d8 !important;
   opacity: 1 !important;
 }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .block-container { padding: .5rem 1rem !important; }
+  h1 { font-size: 1.4rem !important; }
+  .stButton>button { font-size: 1rem !important; padding: .6rem; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -131,7 +153,7 @@ st.image("imagens/LOGO.png")
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
-# FUNÇÕES
+# FUNÇÕES AUXILIARES
 # ==========================
 def horarios_disponiveis(data_str: str):
     agendamentos = listar_agendamentos_por_data(data_str)
@@ -186,13 +208,10 @@ st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 if st.session_state.get("scroll_to_form"):
     components.html("""
         <script>
-        function scrollToForm() {
-          try {
-            const el = window.top.document.querySelector("#form-anchor");
-            if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
-          } catch(e) {}
-        }
-        setTimeout(scrollToForm, 300);
+        setTimeout(() => {
+          const el = window.parent.document.querySelector("#form-anchor");
+          if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 300);
         </script>
     """, height=0)
     st.session_state["scroll_to_form"] = False
