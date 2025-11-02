@@ -9,85 +9,85 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# Caminhos robustos
-REPO_ROOT = Path(__file__).resolve().parents[1]
-IMAGES_DIR = REPO_ROOT / "imagens"
-
-# --- Scroll helper (funciona no Streamlit Cloud e mobile) ---
-def scroll_to_anchor(anchor_id: str = "form-anchor"):
-    components.html(
-        f"""
-        <script>
-        function go() {{
-          const el = window.parent.document.querySelector("#{anchor_id}");
-          if (el) {{
-            el.scrollIntoView({{behavior: 'smooth', block: 'start'}});
-          }} else {{
-            setTimeout(go, 120);
-          }}
-        }}
-        setTimeout(go, 80);
-        </script>
-        """,
-        height=0,
-    )
-
-# Se veio de um clique de serviço, aciona scroll no início
-if st.session_state.get("scroll_to_form"):
-    scroll_to_anchor("form-anchor")
-    st.session_state["scroll_to_form"] = False
+# Caminho base das imagens
+BASE_DIR = Path(__file__).resolve().parents[1]
+IMG_DIR = BASE_DIR / "imagens"
 
 # ==========================
-# CSS E TÍTULOS
+# ESTILOS
 # ==========================
 st.markdown("""
 <style>
-body, .stApp { background-color: #f5f6fa; font-family: 'Poppins', sans-serif; color: #222; }
-h1, h2, h3, h4 { text-align: center; color: #111; }
+body, .stApp {
+    background-color: #f5f6fa;
+    font-family: 'Poppins', sans-serif;
+    color: #222;
+}
+
+/* Cabeçalhos */
+h1, h2, h3, h4 {
+    text-align: center;
+    color: #111;
+}
 h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 h2, h3 { font-size: 1.4rem !important; }
 
+/* Botões */
 .stButton>button {
-  width: 100%; border-radius: 12px;
-  background: linear-gradient(90deg, #007bff, #00b4d8);
-  color: white !important; font-weight: 600;
-  padding: 0.7rem 0; border: none; transition: all .3s ease;
+    width: 100%;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #007bff, #00b4d8);
+    color: white !important;
+    font-weight: 600;
+    padding: 0.7rem 0;
+    border: none;
+    transition: all 0.3s ease;
 }
-.stButton>button:hover { background: linear-gradient(90deg, #0056b3, #0096c7); transform: scale(1.02); }
+.stButton>button:hover {
+    background: linear-gradient(90deg, #0056b3, #0096c7);
+    transform: scale(1.02);
+}
 
-.servico-card { background: #fff; border-radius: 16px; padding: 1rem; margin-bottom: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,.05); text-align: center; }
-.servico-img { border-radius: 15px; width: 100%; height: auto; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-.servico-nome { margin-top: .5rem; font-size: 1.1rem; font-weight: 600; color: #222; }
-.servico-preco { color: #007bff; font-size: 1rem; margin-bottom: .5rem; }
+/* Cards de serviços */
+.servico-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    text-align: center;
+    transition: all 0.25s ease;
+}
+.servico-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 16px rgba(0,123,255,0.2);
+}
 
+/* Mobile */
 @media (max-width: 768px) {
-  .block-container { padding: .5rem 1rem !important; }
-  h1 { font-size: 1.4rem !important; }
-  .stButton>button { font-size: 1rem !important; padding: .6rem; }
+    .block-container { padding: 0.5rem 1rem !important; }
+    h1 { font-size: 1.5rem !important; }
+    h4 { font-size: 1rem !important; }
+    .stButton>button { font-size: 1rem !important; padding: 0.6rem; }
 }
 </style>
 """, unsafe_allow_html=True)
 
+# ==========================
+# CABEÇALHO
+# ==========================
 st.title("💈 Barbearia Cardoso 💈")
-st.markdown("<p style='text-align:center;'>Agende seu horário!</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#333;'>Agende seu horário rapidamente no seu celular!</p>", unsafe_allow_html=True)
 
 # ==========================
-# FUNÇÕES
+# FUNÇÃO DE HORÁRIOS
 # ==========================
-def horarios_disponiveis(data_str: str):
+def horarios_disponiveis(data_str):
     agendamentos = listar_agendamentos_por_data(data_str)
-    ocupados = {a.get("hora") for a in agendamentos if not a.get("bloqueado")}
-    bloqueados = {a.get("hora") for a in agendamentos if a.get("bloqueado")}
+    ocupados = {a["hora"] for a in agendamentos if not a.get("bloqueado")}
+    bloqueados = {a["hora"] for a in agendamentos if a.get("bloqueado")}
     todos = [f"{h:02d}:00" for h in range(9, 19)]
     return [h for h in todos if h not in ocupados and h not in bloqueados]
-
-def safe_image(path: Path):
-    if path.exists():
-        st.image(str(path), use_column_width=True)
-    else:
-        st.image("https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel", use_column_width=True)
-
 
 # ==========================
 # 1️⃣ Escolha do serviço
@@ -108,37 +108,25 @@ servicos = [
     ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
-# Layout de 2 colunas
 col1, col2 = st.columns(2)
 
-# --- Cria os cards clicáveis ---
 for i, (img_name, nome, valor) in enumerate(servicos):
-    is_selected = (
-        "servico" in st.session_state
-        and st.session_state["servico"] == nome
-    )
-
-    border_color = "#007bff" if is_selected else "#ccc"
-    shadow = "0 0 15px rgba(0,123,255,0.4)" if is_selected else "0 2px 10px rgba(0,0,0,.05)"
+    selecionado = "servico" in st.session_state and st.session_state["servico"] == nome
+    border = "#007bff" if selecionado else "#ccc"
+    sombra = "0 0 20px rgba(0,123,255,0.6)" if selecionado else "0 2px 10px rgba(0,0,0,0.1)"
 
     with (col1 if i % 2 == 0 else col2):
         st.markdown(
             f"""
-            <div id="card_{i}" style="
-                cursor:pointer;
-                border:3px solid {border_color};
-                border-radius:16px;
-                padding:1rem;
-                margin-bottom:1.2rem;
-                background:rgba(255,255,255,0.97);
-                box-shadow:{shadow};
-                transition: all 0.25s ease;
-                text-align:center;"
-                onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
-
-                <img src="https://raw.githubusercontent.com/lucasramoscarneiro/BARBEARIA/main/imagens/{img_name}"
-                     alt="{nome}" style="width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
-
+            <div id="card_{i}"
+                 style="cursor:pointer; border:3px solid {border};
+                        border-radius:18px; padding:1rem; margin-bottom:1.2rem;
+                        background:rgba(255,255,255,0.97); box-shadow:{sombra};
+                        text-align:center; transition:all .25s ease;"
+                 onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
+                <img src="imagens/{img_name}"
+                     alt="{nome}" style="width:100%; border-radius:14px;
+                     box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
                 <h4 style="margin-top:0.6rem; color:#111;">{nome}</h4>
                 <p style="margin:0; font-weight:600; color:#007bff;">R$ {valor:.2f}</p>
             </div>
@@ -146,7 +134,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
             unsafe_allow_html=True,
         )
 
-# --- Captura o clique no card via JS bridge ---
+# Captura clique no card
 components.html(
     """
     <script>
@@ -163,15 +151,16 @@ components.html(
     height=0,
 )
 
-# --- Detecta o clique no backend e atualiza sessão ---
+# Detecta clique e faz scroll
 params = st.experimental_get_query_params()
 if "servico" in params:
     st.session_state["servico"] = params["servico"][0]
     st.session_state["valor"] = float(params["valor"][0])
     st.session_state["scroll_to_form"] = True
     st.rerun()
+
 # ==========================
-# 2️⃣ Dados do cliente (âncora + scroll)
+# 2️⃣ Formulário do cliente
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
