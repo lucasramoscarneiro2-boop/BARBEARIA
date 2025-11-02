@@ -7,51 +7,81 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# CSS customizado para aparência mobile
+# CSS customizado para aparência
 st.markdown("""
 <style>
-    body, html {
-        margin: 0;
-        padding: 0;
-    }
-    [data-testid="stAppViewContainer"] {
-        background-color: #f8f9fa;
-        padding-top: 1rem;
+/* === GLOBAL === */
+body, .stApp {
+    background-color: #f5f6fa;
+    font-family: 'Poppins', sans-serif;
+    color: #222;
+}
+
+/* === HEADER === */
+h1, h2, h3, h4 {
+    text-align: center;
+    color: #111;
+}
+
+h1 {
+    font-size: 1.8rem !important;
+    margin-bottom: 0.8rem;
+}
+h2, h3 {
+    font-size: 1.4rem !important;
+}
+
+/* === BUTTONS === */
+.stButton>button {
+    width: 100%;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #007bff, #00b4d8);
+    color: white !important;
+    font-weight: 600;
+    padding: 0.7rem 0;
+    border: none;
+    transition: all 0.3s ease;
+}
+.stButton>button:hover {
+    background: linear-gradient(90deg, #0056b3, #0096c7);
+    transform: scale(1.02);
+}
+
+/* === CARDS DOS SERVIÇOS === */
+.stImage > img {
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.servico-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    text-align: center;
+}
+.servico-card h4 {
+    margin-top: 0.5rem;
+    color: #222;
+    font-size: 1.1rem;
+}
+
+/* === MOBILE FRIENDLY === */
+@media (max-width: 768px) {
+    .block-container {
+        padding: 0.5rem 1rem !important;
     }
     h1 {
-        text-align: center;
-        font-size: 1.8rem !important;
+        font-size: 1.4rem !important;
     }
     h4 {
-        font-size: 1.1rem;
+        font-size: 1rem !important;
     }
     .stButton>button {
-        width: 100%;
-        border-radius: 10px;
-        background-color: #1e88e5 !important;
-        color: white !important;
-        font-weight: 600;
-        padding: 0.6rem 0;
-        margin-top: 5px;
+        font-size: 1rem !important;
+        padding: 0.6rem;
     }
-    .stButton>button:hover {
-        background-color: #1565c0 !important;
-    }
-    img {
-        border-radius: 12px;
-    }
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 0.8rem !important;
-            padding-right: 0.8rem !important;
-        }
-        h1 {
-            font-size: 1.5rem !important;
-        }
-        h4, p {
-            text-align: center;
-        }
-    }
+}
 </style>
 """, unsafe_allow_html=True)
 
