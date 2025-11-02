@@ -80,12 +80,12 @@ servicos = [
     ("Barbo terapia.png", "Barboterapia com toalha quente", 45),
     ("Corte e barba.png", "Corte e barba", 85),
     ("Corte na 0 e Barba.png", "Corte na 0 e barba", 65),
-    ("Cera Quente e Corte.png", "Cera quente e corte", 60),
+    ("Cera nariz.png", "Cera quente e corta", 60),
     ("Alisamento.png", "Alisamento e corte", 70),
     ("Sobrancelha.png", "Sobrancelha", 15),
     ("Pezinho.png", "Pezinho e acabamento", 15),
     ("Kings Day.png", "King’s Day (Corte + Barba + Cera quente)", 95),
-    ("Corte Barba Alisamento Sobrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
+    ("Corte barba alisamento sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
 cols = st.columns(2)
