@@ -39,63 +39,108 @@ if st.session_state.get("scroll_to_form"):
 
 # ==========================
 # CSS E TÍTULOS
-# ==========================
+# =====================
 st.markdown("""
 <style>
-body, .stApp { background-color: #f5f6fa; font-family: 'Poppins', sans-serif; color: #222; }
-h1, h2, h3, h4 { text-align: center; color: #111; }
+/* === FUNDO E TEMA GERAL === */
+body, .stApp {
+  background-color: #0d1b2a; /* azul escuro elegante */
+  font-family: 'Poppins', sans-serif;
+  color: #f5f6fa; /* texto claro */
+}
+
+/* === CABEÇALHOS === */
+h1, h2, h3, h4 {
+  text-align: center;
+  color: #ffffff;
+}
 h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 h2, h3 { font-size: 1.4rem !important; }
 
+/* === BOTÕES === */
 .stButton>button {
-  width: 100%; border-radius: 12px;
-  background: linear-gradient(90deg, #007bff, #00b4d8);
-  color: white !important; font-weight: 600;
-  padding: 0.7rem 0; border: none; transition: all .3s ease;
+  width: 100%;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #00b4d8, #0077b6);
+  color: white !important;
+  font-weight: 600;
+  padding: 0.7rem 0;
+  border: none;
+  transition: all 0.3s ease;
 }
 .stButton>button:hover {
-  background: linear-gradient(90deg, #0056b3, #0096c7);
+  background: linear-gradient(90deg, #0096c7, #023e8a);
+  transform: scale(1.03);
+}
+
+/* === CARDS DOS SERVIÇOS === */
+.servico-card {
+  background: #1b263b;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all .25s ease;
+}
+.servico-card:hover {
+  border-color: #00b4d8;
   transform: scale(1.02);
 }
-
-.servico-card {
-  background: #fff; border-radius: 16px; padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,.05);
-  text-align: center;
-}
 .servico-img {
-  border-radius: 15px; width: 100%; height: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  border-radius: 15px;
+  width: 100%;
+  height: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
 }
-.servico-nome { margin-top: .5rem; font-size: 1.1rem; font-weight: 600; color: #222; }
-.servico-preco { color: #007bff; font-size: 1rem; margin-bottom: .5rem; }
+.servico-nome {
+  margin-top: .6rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f5f6fa;
+}
+.servico-preco {
+  color: #00b4d8;
+  font-size: 1rem;
+  margin-bottom: .5rem;
+}
 
+/* === CAMPOS DE TEXTO === */
+input, textarea, select {
+  color: #000 !important;
+  background-color: #fdfdfd !important;
+  font-weight: 500 !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #ccc !important;
+  padding: 0.6rem 0.8rem !important;
+}
+input:focus, textarea:focus {
+  border-color: #00b4d8 !important;
+  outline: none !important;
+  box-shadow: 0 0 6px rgba(0,180,216,0.4);
+}
+::placeholder {
+  color: #555 !important;
+}
+
+/* === SELECTBOX (horário) === */
+div[data-baseweb="select"] > div {
+  background-color: #fff !important;
+  color: #000 !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #ccc !important;
+  padding: 0.4rem 0.6rem !important;
+}
+div[data-baseweb="select"] svg {
+  color: #00b4d8 !important;
+}
+
+/* === MOBILE === */
 @media (max-width: 768px) {
   .block-container { padding: .5rem 1rem !important; }
   h1 { font-size: 1.4rem !important; }
   .stButton>button { font-size: 1rem !important; padding: .6rem; }
-}
-
-/* === Campos de texto personalizados === */
-input, textarea, select {
-  color: #000 !important;
-  font-weight: 500 !important;
-}
-::placeholder {
-  color: #444 !important;
-  opacity: 1 !important;
-}
-input, textarea {
-  background-color: #fff !important;
-  border: 1.5px solid #ccc !important;
-  border-radius: 10px !important;
-  padding: 0.6rem 0.8rem !important;
-}
-input:focus, textarea:focus {
-  border-color: #007bff !important;
-  outline: none !important;
-  box-shadow: 0 0 6px rgba(0,123,255,0.3);
 }
 </style>
 """, unsafe_allow_html=True)
