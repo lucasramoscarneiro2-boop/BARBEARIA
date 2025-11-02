@@ -119,7 +119,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
             st.session_state["scroll_to_form"] = True
-            st.experimental_rerun()
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
