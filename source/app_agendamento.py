@@ -228,24 +228,47 @@ data = st.date_input("Escolha o dia", format="DD/MM/YYYY")
 data_str = data.strftime("%d/%m/%Y")
 
 # Corrige visual do selectbox de horário
+
+# --- estilos para o selectbox de horário (corrige invisibilidade) ---
 st.markdown("""
 <style>
+/* Caixa visível e confortável */
 [data-baseweb="select"] > div {
-  background-color: #fff !important;
-  color: #000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
   border-radius: 10px !important;
-  border: 1.5px solid #ccc !important;
+  border: 2px solid #00b4d8 !important;
   padding: 0.6rem 0.6rem !important;
-  font-weight: 500 !important;
-  line-height: 1.4rem !important;
   min-height: 48px !important;
-  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
   display: flex !important;
   align-items: center !important;
 }
+
+/* Texto sempre visível (corrige tema escuro de celular) */
+[data-baseweb="select"] div[role="option"],
+[data-baseweb="select"] div[role="button"],
+[data-baseweb="select"] * {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Remove campo interno invisível */
+[data-baseweb="select"] input {
+  height: auto !important;
+  min-height: 1.2rem !important;
+  padding: 0 !important;
+  opacity: 1 !important;
+}
+
+/* Aumenta o contraste da setinha */
+[data-baseweb="select"] svg {
+  color: #00b4d8 !important;
+  opacity: 1 !important;
+}
 </style>
 """, unsafe_allow_html=True)
-
 # Horários disponíveis
 disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
