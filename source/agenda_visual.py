@@ -1,6 +1,7 @@
 import streamlit as st
-from datetime import date
+from datetime import date, timedelta
 import streamlit.components.v1 as components
+from streamlit_calendar import calendar
 from db_supabase import (
     listar_agendamentos_por_data,
     cancelar_agendamento,
@@ -54,8 +55,6 @@ body, .stApp {
     color: gray;
     margin-left: 10px;
 }
-
-/* ===== Toast notification com animação pulsante ===== */
 .toast {
     position: fixed;
     bottom: 30px;
@@ -84,7 +83,7 @@ st.title("💇‍♂️ Agenda do Barbeiro")
 st.markdown("Gerencie seus horários — veja agendamentos, bloqueie ou libere horários")
 
 # ==========================
-# LOGIN PERSISTENTE (sem libs extras)
+# LOGIN PERSISTENTE
 # ==========================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -112,17 +111,14 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# AUTOATUALIZAÇÃO SEM BIBLIOTECA
+# AUTOATUALIZAÇÃO
 # ==========================
 REFRESH_INTERVAL = 60  # segundos
-
-# Botão manual (útil no celular)
 colA, colB, colC = st.columns([1,1,1])
 with colB:
     if st.button("🔄 Atualizar agora"):
         st.rerun()
 
-# Timer via JS (não perde sessão)
 components.html(f"""
 <script>
   setTimeout(() => {{
@@ -132,19 +128,49 @@ components.html(f"""
 """, height=0)
 
 # ==========================
-# FILTRO DE DATA E BUSCA
+# CALENDÁRIO SEMANAL VISUAL
+# ==========================
+st.divider()
+st.subheader("📆 Visualização semanal da agenda")
+
+hoje = date.today()
+inicio_semana = hoje - timedelta(days=hoje.weekday())
+fim_semana = inicio_semana + timedelta(days=6)
+
+eventos = []
+for i in range(7):
+    data = (inicio_semana + timedelta(days=i)).strftime("%d/%m/%Y")
+    for ag in listar_agendamentos_por_data(data):
+        cor = "#1b9e77" if not ag.get("bloqueado") else "#d73027"
+        eventos.append({
+            "title": f"{ag['hora']} {ag['nome']} ({ag['servico']})",
+            "start": f"2025-{data[3:5]}-{data[0:2]}",
+            "color": cor,
+        })
+
+calendar_options = {
+    "initialView": "dayGridWeek",
+    "locale": "pt-br",
+    "height": 650,
+    "headerToolbar": {
+        "left": "prev,next today",
+        "center": "title",
+        "right": "dayGridMonth,dayGridWeek,dayGridDay"
+    },
+}
+calendar(events=eventos, options=calendar_options)
+
+# ==========================
+# FILTRO DE DATA (DETALHES)
 # ==========================
 data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
 
 agendamentos = listar_agendamentos_por_data(data_str)
 total_atual = len(agendamentos)
-
-# Detecta novos agendamentos (comparando com o total anterior)
 novos_agendamentos = total_atual > st.session_state["ultimo_total"]
 st.session_state["ultimo_total"] = total_atual
 
-# 🔔 Toast visual + som ao receber novo agendamento
 if novos_agendamentos:
     components.html("""
     <div class="toast">💈 Novo agendamento recebido!</div>
@@ -176,10 +202,10 @@ if st.button("Bloquear horário"):
         st.rerun()
 
 # ==========================
-# AGENDA VISUAL
+# AGENDA VISUAL DETALHADA
 # ==========================
 st.divider()
-st.markdown(f"### 🗓️ Agenda de {data_str}")
+st.markdown(f"### 🗓️ Agenda detalhada de {data_str}")
 st.markdown("<div class='agenda-container'>", unsafe_allow_html=True)
 
 horarios = [f"{h:02d}:00" for h in range(9, 20)]
@@ -226,4 +252,4 @@ for hora in horarios:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda online com alertas animados e som automático</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda online com visual semanal, alertas e som automático</p>", unsafe_allow_html=True)
