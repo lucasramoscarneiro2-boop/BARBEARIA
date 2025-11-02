@@ -70,7 +70,4 @@ if "cliente" in st.session_state:
 else:
     st.error("Nenhum agendamento encontrado.")
 
-if st.button("⬅️ Voltar para o início"):
-    st.switch_page("agendamento.py")
-
 st.markdown("</div>", unsafe_allow_html=True)
