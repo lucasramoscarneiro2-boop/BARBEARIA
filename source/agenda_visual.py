@@ -7,7 +7,6 @@ from db_supabase import (
     bloquear_horario,
     autenticar
 )
-from streamlit_autorefresh import st_autorefresh
 
 # ==========================
 # CONFIGURAÇÃO GERAL
@@ -31,6 +30,7 @@ body, .stApp {
     font-weight: bold;
     width: 80px;
     color: #00bfff;
+    display:inline-block;
 }
 .agenda-bloco {
     border-bottom: 1px solid #333;
@@ -77,7 +77,6 @@ body, .stApp {
 }
 @keyframes fadein { from {opacity: 0; bottom: 10px;} to {opacity: 1; bottom: 30px;} }
 @keyframes fadeout { from {opacity: 1; bottom: 30px;} to {opacity: 0; bottom: 10px;} }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -85,7 +84,7 @@ st.title("💇‍♂️ Agenda do Barbeiro")
 st.markdown("Gerencie seus horários — veja agendamentos, bloqueie ou libere horários")
 
 # ==========================
-# LOGIN PERSISTENTE (sem query params)
+# LOGIN PERSISTENTE (sem libs extras)
 # ==========================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -113,13 +112,27 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# AUTOATUALIZAÇÃO SEGURA
+# AUTOATUALIZAÇÃO SEM BIBLIOTECA
 # ==========================
 REFRESH_INTERVAL = 60  # segundos
-st_autorefresh(interval=REFRESH_INTERVAL * 1000, key="auto_refresh_key")
+
+# Botão manual (útil no celular)
+colA, colB, colC = st.columns([1,1,1])
+with colB:
+    if st.button("🔄 Atualizar agora"):
+        st.rerun()
+
+# Timer via JS (não perde sessão)
+components.html(f"""
+<script>
+  setTimeout(() => {{
+    window.parent.location.reload();
+  }}, {REFRESH_INTERVAL * 1000});
+</script>
+""", height=0)
 
 # ==========================
-# FILTRO DE DATA E AGENDAMENTOS
+# FILTRO DE DATA E BUSCA
 # ==========================
 data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
@@ -127,7 +140,7 @@ data_str = data_filtro.strftime("%d/%m/%Y")
 agendamentos = listar_agendamentos_por_data(data_str)
 total_atual = len(agendamentos)
 
-# Detecta novos agendamentos
+# Detecta novos agendamentos (comparando com o total anterior)
 novos_agendamentos = total_atual > st.session_state["ultimo_total"]
 st.session_state["ultimo_total"] = total_atual
 
