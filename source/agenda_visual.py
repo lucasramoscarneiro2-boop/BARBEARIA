@@ -97,12 +97,12 @@ if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time()
 if time() - st.session_state.last_refresh > REFRESH_INTERVAL:
     st.session_state.last_refresh = time()
-    st.experimental_rerun()
+    st.rerun()
 
 colA, colB, colC = st.columns([1,1,1])
 with colB:
     if st.button("🔄 Atualizar agora"):
-        st.experimental_rerun()
+        st.rerun()
 
 # ==========================
 # CALENDÁRIO SEMANAL
@@ -178,7 +178,7 @@ if st.button("Bloquear horário"):
     else:
         bloquear_horario(data_str, hora_bloqueio, motivo or "Bloqueado")
         st.success(f"🚫 Horário {hora_bloqueio} bloqueado!")
-        st.experimental_rerun()
+        st.rerun()
 
 # ==========================
 # LISTA DETALHADA
@@ -197,13 +197,13 @@ for h in [f"{x:02d}:00" for x in range(9, 20)]:
             if st.button(f"🔓 Desbloquear {h}", key=f"u_{h}"):
                 cancelar_agendamento(ag["id"])
                 st.success(f"✅ Horário {h} liberado.")
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.markdown(f"<div class='ocupado'><strong>{ag['nome']}</strong><br>✂️ {ag['servico']} — 💰 R$ {ag['valor']},00<br>📞 {ag['telefone']}</div>", unsafe_allow_html=True)
             if st.button(f"❌ Cancelar {ag['nome']} - {h}", key=f"c_{h}"):
                 cancelar_agendamento(ag["id"])
                 st.warning(f"🚫 Agendamento de {ag['nome']} às {h} cancelado.")
-                st.experimental_rerun()
+                st.rerun()
     else:
         st.markdown("<span class='livre'>🕓 Horário livre</span>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
