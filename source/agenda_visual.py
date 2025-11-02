@@ -92,7 +92,7 @@ if not st.session_state.autenticado:
 # ==========================
 # AUTO REFRESH SUAVE
 # ==========================
-REFRESH_INTERVAL = 60
+REFRESH_INTERVAL = 300
 if "last_refresh" not in st.session_state:
     st.session_state.last_refresh = time()
 if time() - st.session_state.last_refresh > REFRESH_INTERVAL:
