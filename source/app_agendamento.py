@@ -50,7 +50,6 @@ def scroll_to_anchor(anchor_id: str = "form-anchor"):
         height=0,
     )
 
-# Se foi clicado, rola até o formulário
 if st.session_state.get("scroll_to_form"):
     scroll_to_anchor("form-anchor")
     st.session_state["scroll_to_form"] = False
@@ -85,15 +84,14 @@ h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 }
 .servico-card.selecionado {
   border: 3px solid #007bff;
-  box-shadow: 0 0 12px rgba(0,123,255,0.5);
+  box-shadow: 0 0 14px rgba(0,123,255,0.6);
   animation: pulseBorder 1.4s infinite;
 }
 @keyframes pulseBorder {
   0% { box-shadow: 0 0 10px rgba(0,123,255,0.5); }
-  50% { box-shadow: 0 0 20px rgba(0,123,255,0.9); }
+  50% { box-shadow: 0 0 22px rgba(0,123,255,0.9); }
   100% { box-shadow: 0 0 10px rgba(0,123,255,0.5); }
 }
-
 .servico-img {
   border-radius: 14px;
   width: 100%;
@@ -108,6 +106,13 @@ h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 .servico-preco {
   color: #007bff;
   font-weight: 500;
+  margin-bottom: .2rem;
+}
+.stButton>button {
+  visibility: hidden;
+  height: 0px;
+  padding: 0;
+  margin: 0;
 }
 @media (max-width: 768px) {
   .block-container { padding: .5rem 1rem !important; }
@@ -154,18 +159,31 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         classe = "servico-card selecionado" if selecionado else "servico-card"
 
         html = f"""
-        <div class="{classe}" onclick="window.parent.postMessage({{'click': '{nome}'}}, '*')">
+        <div class="{classe}" onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
             <img class="servico-img" src="{img_b64}" alt="{nome}">
             <div class="servico-nome">{nome}</div>
             <div class="servico-preco">R$ {valor},00</div>
         </div>
         """
-        if st.button(f"btn_{i}", key=f"btn_{i}", label_visibility="collapsed"):
+        st.markdown(html, unsafe_allow_html=True)
+        # Botão invisível que recebe clique do postMessage
+        if st.button(f"select_{i}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
             st.session_state["scroll_to_form"] = True
             st.rerun()
-        st.markdown(html, unsafe_allow_html=True)
+
+# Listener JS → dispara o botão invisível
+components.html("""
+<script>
+window.addEventListener('message', (event) => {
+  if (event.data.servico) {
+    const idx = [...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('select'));
+    if (idx >= 0) document.querySelectorAll('button')[idx].click();
+  }
+});
+</script>
+""", height=0)
 
 # ==========================
 # 2️⃣ DADOS DO CLIENTE
