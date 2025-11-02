@@ -9,11 +9,11 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# Caminho base das imagens (um nível acima de /source)
+# Caminho base das imagens (um nível acima da pasta /source)
 IMG_DIR = Path(__file__).resolve().parent.parent / "imagens"
 
 # ==========================
-# ESTILOS
+# ESTILOS GLOBAIS
 # ==========================
 st.markdown("""
 <style>
@@ -31,13 +31,14 @@ h1, h2, h3, h4 {
 h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 h2, h3 { font-size: 1.4rem !important; }
 
-/* Cards e efeitos */
+/* Efeito pulse azul no card selecionado */
 @keyframes pulse {
   0% { box-shadow: 0 0 0px rgba(0,123,255,0.3); }
   50% { box-shadow: 0 0 20px rgba(0,123,255,0.6); }
   100% { box-shadow: 0 0 0px rgba(0,123,255,0.3); }
 }
 
+/* Layout dos cards */
 .servico-card {
     background: white;
     border-radius: 16px;
@@ -106,34 +107,23 @@ for i, (img_name, nome, valor) in enumerate(servicos):
     animacao = "animation:pulse 1.5s infinite;" if selecionado else ""
 
     img_path = IMG_DIR / img_name
-    img_str = str(img_path)
 
     with (col1 if i % 2 == 0 else col2):
-        st.markdown(
-            f"""
-            <div id="card_{i}" style="
-                border:3px solid {border};
-                border-radius:18px;
-                padding:1rem;
-                margin-bottom:1.2rem;
-                background:rgba(255,255,255,0.97);
-                text-align:center;
-                transition:all .25s ease;
-                cursor:pointer;
-                {animacao}
-            " onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
+        html_card = f"""
+        <div id="card_{i}" class="servico-card" 
+             style="border:3px solid {border}; {animacao}"
+             onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
 
-                <img src='{img_str}' alt='{nome}'
-                     style='width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);' />
+            <img src='{img_path.as_posix()}' alt='{nome}'
+                 style='width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);' />
 
-                <h4 style='margin-top:0.6rem; color:#111;'>{nome}</h4>
-                <p style='margin:0; font-weight:600; color:#007bff;'>R$ {valor:.2f}</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <h4 style='margin-top:0.6rem; color:#111;'>{nome}</h4>
+            <p style='margin:0; font-weight:600; color:#007bff;'>R$ {valor:.2f}</p>
+        </div>
+        """
+        st.markdown(html_card, unsafe_allow_html=True)
 
-# JS Bridge para clicar no card
+# JS Bridge para captar o clique e atualizar a URL
 components.html(
     """
     <script>
@@ -150,7 +140,7 @@ components.html(
     height=0,
 )
 
-# Detecta clique e faz scroll até o formulário
+# Detecta o clique e faz scroll automático até o formulário
 params = st.experimental_get_query_params()
 if "servico" in params:
     st.session_state["servico"] = params["servico"][0]
@@ -159,7 +149,7 @@ if "servico" in params:
     st.rerun()
 
 # ==========================
-# 2️⃣ Formulário de cliente
+# 2️⃣ Formulário do cliente
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
