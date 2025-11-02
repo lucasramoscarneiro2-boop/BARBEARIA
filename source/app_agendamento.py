@@ -9,6 +9,19 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
+# === OCULTAR LOGO GITHUB, FOOTER E MENU PADRÃO DO STREAMLIT ===
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+[data-testid="stToolbar"] {visibility: hidden !important;}
+[data-testid="stDecoration"] {display: none !important;}
+[data-testid="stStatusWidget"] {display: none !important;}
+[data-testid="stSidebarCollapseButton"] {display: none !important;}
+</style>
+""", unsafe_allow_html=True)
+
 # Caminhos robustos
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
@@ -39,14 +52,13 @@ if st.session_state.get("scroll_to_form"):
 
 # ==========================
 # CSS E TÍTULOS
-# =====================
+# ==========================
 st.markdown("""
 <style>
-/* === FUNDO E TEMA GERAL === */
 body, .stApp {
   background-color: #0b1a3a; /* azul escuro elegante */
   font-family: 'Poppins', sans-serif;
-  color: #f5f6fa; /* texto claro */
+  color: #f5f6fa;
 }
 
 /* === CABEÇALHOS === */
@@ -147,13 +159,13 @@ div[data-baseweb="select"] svg {
 
 # ==========================
 # CABEÇALHO
+# ==========================
 st.image("imagens/LOGO.png")
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
-# FUNÇÕES
+# FUNÇÕES AUXILIARES
 # ==========================
-
 def horarios_disponiveis(data_str: str):
     agendamentos = listar_agendamentos_por_data(data_str)
     ocupados = {a.get("hora") for a in agendamentos if not a.get("bloqueado")}
@@ -168,9 +180,8 @@ def safe_image(path: Path):
         st.image("https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel", use_column_width=True)
 
 # ==========================
-# 1️⃣ Escolha do serviço
+# 1️⃣ ESCOLHA DE SERVIÇO
 # ==========================
-
 st.markdown("""
 <style>
 .titulo-servico {
@@ -181,14 +192,14 @@ st.markdown("""
     justify-content: center;
     gap: 6px;
     font-weight: 700;
-    font-size: 0.7rem;   /* 🔹 tamanho 50% menor */
-    white-space: nowrap; /* 🔹 impede quebra de linha */
+    font-size: 0.7rem; /* 50% menor */
+    white-space: nowrap;
     margin-top: 1rem;
 }
 </style>
-
 <h2 class="titulo-servico">✂️ <span>Escolha o serviço desejado</span></h2>
 """, unsafe_allow_html=True)
+
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
     ("Barba.png", "Barba", 35),
@@ -210,7 +221,6 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         safe_image(IMAGES_DIR / img_name)
         st.markdown(f'<div class="servico-nome">{nome}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="servico-preco">R$ {valor},00</div>', unsafe_allow_html=True)
-
         if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
@@ -219,7 +229,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
-# 2️⃣ Dados do cliente (âncora + scroll)
+# 2️⃣ FORMULÁRIO CLIENTE
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
@@ -228,7 +238,6 @@ if "servico" not in st.session_state:
     st.stop()
 
 st.success(f"Serviço selecionado: {st.session_state['servico']} (R$ {st.session_state['valor']},00)")
-
 st.divider()
 st.subheader("📋 Informe seus dados")
 
@@ -242,20 +251,14 @@ if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
 else:
     hora = st.selectbox("Escolha o horário", disponiveis, key="hora_select")
-
     if st.button("✅ Confirmar agendamento", type="primary"):
         hora_selecionada = st.session_state.get("hora_select", hora)
-
         if not nome or not telefone or not hora_selecionada:
             st.warning("⚠️ Preencha todos os campos antes de confirmar.")
         else:
             inserir_agendamento(
-                nome,
-                telefone,
-                data_str,
-                hora_selecionada,
-                st.session_state["servico"],
-                st.session_state["valor"]
+                nome, telefone, data_str, hora_selecionada,
+                st.session_state["servico"], st.session_state["valor"]
             )
             st.success(f"✅ Agendamento confirmado para {data_str} às {hora_selecionada}!")
             st.balloons()
