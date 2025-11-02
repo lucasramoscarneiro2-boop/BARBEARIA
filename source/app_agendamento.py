@@ -22,7 +22,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Força idioma do calendário e data para português
+# Idioma do calendário
 try:
     locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")
 except locale.Error:
@@ -45,13 +45,9 @@ body, .stApp {
   font-family: 'Poppins', sans-serif;
   color: #ffffff !important;
 }
-
-/* Força cor branca em títulos, labels e textos */
 h1, h2, h3, h4, label, p, span, div, strong {
   color: #ffffff !important;
 }
-
-/* Botões */
 .stButton>button {
   width: 100%;
   border-radius: 12px;
@@ -66,8 +62,6 @@ h1, h2, h3, h4, label, p, span, div, strong {
   background: linear-gradient(90deg, #0096c7, #023e8a);
   transform: scale(1.03);
 }
-
-/* Cards dos serviços */
 .servico-card {
   background: #1b263b;
   border-radius: 16px;
@@ -99,8 +93,6 @@ h1, h2, h3, h4, label, p, span, div, strong {
   font-size: 1rem;
   margin-bottom: .5rem;
 }
-
-/* Campos de texto */
 input, textarea, select {
   color: #000 !important;
   background-color: #fdfdfd !important;
@@ -109,13 +101,6 @@ input, textarea, select {
   border: 1.5px solid #ccc !important;
   padding: 0.6rem 0.8rem !important;
 }
-input:focus, textarea:focus {
-  border-color: #00b4d8 !important;
-  outline: none !important;
-  box-shadow: 0 0 6px rgba(0,180,216,0.4);
-}
-
-/* Selectbox (corrige invisibilidade em celulares) */
 [data-baseweb="select"] > div {
   background-color: #ffffff !important;
   color: #000000 !important;
@@ -128,28 +113,13 @@ input:focus, textarea:focus {
   display: flex !important;
   align-items: center !important;
 }
-[data-baseweb="select"] div[role="option"],
-[data-baseweb="select"] div[role="button"],
 [data-baseweb="select"] * {
   color: #000000 !important;
   background-color: #ffffff !important;
 }
-[data-baseweb="select"] input {
-  height: auto !important;
-  min-height: 1.2rem !important;
-  padding: 0 !important;
-  opacity: 1 !important;
-}
 [data-baseweb="select"] svg {
   color: #00b4d8 !important;
   opacity: 1 !important;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .block-container { padding: .5rem 1rem !important; }
-  h1 { font-size: 1.4rem !important; }
-  .stButton>button { font-size: 1rem !important; padding: .6rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -161,10 +131,9 @@ st.image("imagens/LOGO.png")
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
-# FUNÇÕES AUXILIARES
+# FUNÇÕES
 # ==========================
 def horarios_disponiveis(data_str: str):
-    """Gera lista de horários livres no formato HH:MM"""
     agendamentos = listar_agendamentos_por_data(data_str)
     ocupados = {str(a.get("hora")).zfill(5) for a in agendamentos if not a.get("bloqueado")}
     bloqueados = {str(a.get("hora")).zfill(5) for a in agendamentos if a.get("bloqueado")}
@@ -178,11 +147,9 @@ def safe_image(path: Path):
         st.image("https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel", use_column_width=True)
 
 # ==========================
-# ESCOLHA DO SERVIÇO
+# SERVIÇOS
 # ==========================
-st.markdown("""
-<h2 style="text-align:center; color:white;">✂️ Escolha o serviço desejado</h2>
-""", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align:center;'>✂️ Escolha o serviço desejado</h2>", unsafe_allow_html=True)
 
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
@@ -205,8 +172,7 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         safe_image(IMAGES_DIR / img_name)
         st.markdown(f'<div class="servico-nome">{nome}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="servico-preco">R$ {valor},00</div>', unsafe_allow_html=True)
-
-        if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
+        if st.button(f"Selecionar serviço", key=f"btn_{nome}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
             st.session_state["scroll_to_form"] = True
@@ -214,16 +180,19 @@ for i, (img_name, nome, valor) in enumerate(servicos):
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
-# FORMULÁRIO DO CLIENTE
+# FORMULÁRIO
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
-
-# Scroll automático ao selecionar o serviço
 if st.session_state.get("scroll_to_form"):
     components.html("""
         <script>
-        const el = window.parent.document.querySelector("#form-anchor");
-        if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+        function scrollToForm() {
+          try {
+            const el = window.top.document.querySelector("#form-anchor");
+            if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+          } catch(e) {}
+        }
+        setTimeout(scrollToForm, 300);
         </script>
     """, height=0)
     st.session_state["scroll_to_form"] = False
@@ -238,25 +207,26 @@ st.subheader("📋 Informe seus dados")
 
 nome = st.text_input("Seu nome completo")
 telefone = st.text_input("Seu WhatsApp (ex: 11 99999-9999)")
-
-# 📅 Data com formato brasileiro e calendário em português
 data = st.date_input("Escolha o dia", format="DD/MM/YYYY")
 data_str = data.strftime("%d/%m/%Y")
 
-# 🕒 Horário (corrigido e visível)
 disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
 else:
-    hora = st.selectbox("Escolha o horário", disponiveis, key="hora_select")
+    hora = st.selectbox("Escolha o horário", disponiveis or ["Nenhum disponível"], key="hora_select")
 
     if st.button("✅ Confirmar agendamento", type="primary"):
         if not nome or not telefone or not hora:
             st.warning("⚠️ Preencha todos os campos antes de confirmar.")
         else:
+            st.session_state["cliente"] = nome
+            st.session_state["telefone"] = telefone
+            st.session_state["data"] = data_str
+            st.session_state["hora"] = hora
+
             inserir_agendamento(
                 nome, telefone, data_str, hora,
                 st.session_state["servico"], st.session_state["valor"]
             )
-            st.success(f"✅ Agendamento confirmado para {data_str} às {hora}!")
-            st.balloons()
+            st.switch_page("pages/confirmacao.py")
