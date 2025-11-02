@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime, date
+import streamlit.components.v1 as components
 from db_supabase import (
     listar_agendamentos_por_data,
     cancelar_agendamento,
@@ -8,7 +9,7 @@ from db_supabase import (
 )
 
 # ==========================
-# LOGIN DO BARBEIRO
+# CONFIGURAÇÃO GERAL
 # ==========================
 st.set_page_config(page_title="Agenda do Barbeiro", layout="centered", page_icon="💈")
 
@@ -52,6 +53,30 @@ body, .stApp {
     color: gray;
     margin-left: 10px;
 }
+
+/* ===== Toast notification com animação pulsante ===== */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(90deg, #0044cc, #ff0000, #ffffff);
+    background-size: 300% 300%;
+    color: #fff;
+    padding: 18px 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    font-weight: bold;
+    z-index: 9999;
+    animation: glow 3s ease-in-out infinite, fadein 0.5s, fadeout 0.5s 4s;
+}
+@keyframes glow {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+@keyframes fadein { from {opacity: 0; bottom: 10px;} to {opacity: 1; bottom: 30px;} }
+@keyframes fadeout { from {opacity: 1; bottom: 30px;} to {opacity: 0; bottom: 10px;} }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,10 +84,14 @@ st.title("💇‍♂️ Agenda do Barbeiro")
 st.markdown("Gerencie seus horários — veja agendamentos, bloqueie ou libere horários")
 
 # ==========================
-# LOGIN
+# LOGIN PERSISTENTE
 # ==========================
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
+
+params = st.experimental_get_query_params()
+if "usuario" in params and not st.session_state.autenticado:
+    st.session_state.autenticado = True
 
 if not st.session_state.autenticado:
     st.subheader("🔐 Login do barbeiro")
@@ -72,6 +101,7 @@ if not st.session_state.autenticado:
     if st.button("Entrar"):
         if autenticar(usuario, senha):
             st.session_state.autenticado = True
+            st.experimental_set_query_params(usuario=usuario)
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
         else:
@@ -79,12 +109,40 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================
-# FILTRO DE DATA
+# ATUALIZAÇÃO AUTOMÁTICA
 # ==========================
+REFRESH_INTERVAL = 60  # segundos
+if "ultimo_total" not in st.session_state:
+    st.session_state["ultimo_total"] = 0
+
 data_filtro = st.date_input("📅 Escolha o dia", value=date.today())
 data_str = data_filtro.strftime("%d/%m/%Y")
 
 agendamentos = listar_agendamentos_por_data(data_str)
+total_atual = len(agendamentos)
+
+# Detecta novos agendamentos
+novos_agendamentos = total_atual > st.session_state["ultimo_total"]
+st.session_state["ultimo_total"] = total_atual
+
+# 🔔 Toast visual com efeito e som
+if novos_agendamentos:
+    components.html("""
+    <div class="toast">💈 Novo agendamento recebido!</div>
+    <script>
+    const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    audio.play();
+    </script>
+    """, height=0)
+
+# Atualização automática sem perder login
+components.html(f"""
+<script>
+setTimeout(() => {{
+    window.parent.location.reload();
+}}, {REFRESH_INTERVAL * 1000});
+</script>
+""", height=0)
 
 # ==========================
 # BLOQUEAR HORÁRIO
@@ -158,4 +216,4 @@ for hora in horarios:
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
-st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda online com bloqueios e cancelamentos</p>", unsafe_allow_html=True)
+st.markdown("<br><p style='text-align:center; color:gray;'>💈 Barbearia Cardoso 💈 — Agenda online com alertas animados e som automático</p>", unsafe_allow_html=True)
