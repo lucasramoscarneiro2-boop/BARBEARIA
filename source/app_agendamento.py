@@ -77,7 +77,7 @@ st.subheader("✂️ Escolha o serviço desejado")
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
     ("Barba.png", "Barba", 35),
-    ("Barboterapia.png", "Barboterapia com toalha quente", 45),
+    ("Barbo terapia.png", "Barboterapia com toalha quente", 45),
     ("Corte e Barba.png", "Corte e barba", 85),
     ("Corte na 0 e Barba.png", "Corte na 0 e barba", 65),
     ("Cera Quente e Corte.png", "Cera quente e corte", 60),
