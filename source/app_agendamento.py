@@ -9,9 +9,8 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# Caminho base das imagens
-BASE_DIR = Path(__file__).resolve().parents[1]
-IMG_DIR = BASE_DIR / "imagens"
+# Caminho base das imagens (um nível acima de /source)
+IMG_DIR = Path(__file__).resolve().parent.parent / "imagens"
 
 # ==========================
 # ESTILOS
@@ -32,35 +31,27 @@ h1, h2, h3, h4 {
 h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
 h2, h3 { font-size: 1.4rem !important; }
 
-/* Botões */
-.stButton>button {
-    width: 100%;
-    border-radius: 12px;
-    background: linear-gradient(90deg, #007bff, #00b4d8);
-    color: white !important;
-    font-weight: 600;
-    padding: 0.7rem 0;
-    border: none;
-    transition: all 0.3s ease;
-}
-.stButton>button:hover {
-    background: linear-gradient(90deg, #0056b3, #0096c7);
-    transform: scale(1.02);
+/* Cards e efeitos */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0px rgba(0,123,255,0.3); }
+  50% { box-shadow: 0 0 20px rgba(0,123,255,0.6); }
+  100% { box-shadow: 0 0 0px rgba(0,123,255,0.3); }
 }
 
-/* Cards de serviços */
 .servico-card {
     background: white;
     border-radius: 16px;
     padding: 1rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.2rem;
     text-align: center;
     transition: all 0.25s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 2px solid #ccc;
+    cursor: pointer;
 }
 .servico-card:hover {
     transform: scale(1.03);
-    box-shadow: 0 4px 16px rgba(0,123,255,0.2);
+    border-color: #007bff;
 }
 
 /* Mobile */
@@ -68,7 +59,6 @@ h2, h3 { font-size: 1.4rem !important; }
     .block-container { padding: 0.5rem 1rem !important; }
     h1 { font-size: 1.5rem !important; }
     h4 { font-size: 1rem !important; }
-    .stButton>button { font-size: 1rem !important; padding: 0.6rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -113,28 +103,37 @@ col1, col2 = st.columns(2)
 for i, (img_name, nome, valor) in enumerate(servicos):
     selecionado = "servico" in st.session_state and st.session_state["servico"] == nome
     border = "#007bff" if selecionado else "#ccc"
-    sombra = "0 0 20px rgba(0,123,255,0.6)" if selecionado else "0 2px 10px rgba(0,0,0,0.1)"
+    animacao = "animation:pulse 1.5s infinite;" if selecionado else ""
+
+    img_path = IMG_DIR / img_name
+    img_str = str(img_path)
 
     with (col1 if i % 2 == 0 else col2):
         st.markdown(
             f"""
-            <div id="card_{i}"
-                 style="cursor:pointer; border:3px solid {border};
-                        border-radius:18px; padding:1rem; margin-bottom:1.2rem;
-                        background:rgba(255,255,255,0.97); box-shadow:{sombra};
-                        text-align:center; transition:all .25s ease;"
-                 onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
-                <img src="imagens/{img_name}"
-                     alt="{nome}" style="width:100%; border-radius:14px;
-                     box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
-                <h4 style="margin-top:0.6rem; color:#111;">{nome}</h4>
-                <p style="margin:0; font-weight:600; color:#007bff;">R$ {valor:.2f}</p>
+            <div id="card_{i}" style="
+                border:3px solid {border};
+                border-radius:18px;
+                padding:1rem;
+                margin-bottom:1.2rem;
+                background:rgba(255,255,255,0.97);
+                text-align:center;
+                transition:all .25s ease;
+                cursor:pointer;
+                {animacao}
+            " onclick="window.parent.postMessage({{'servico':'{nome}','valor':{valor}}}, '*')">
+
+                <img src='{img_str}' alt='{nome}'
+                     style='width:100%; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.15);' />
+
+                <h4 style='margin-top:0.6rem; color:#111;'>{nome}</h4>
+                <p style='margin:0; font-weight:600; color:#007bff;'>R$ {valor:.2f}</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-# Captura clique no card
+# JS Bridge para clicar no card
 components.html(
     """
     <script>
@@ -151,7 +150,7 @@ components.html(
     height=0,
 )
 
-# Detecta clique e faz scroll
+# Detecta clique e faz scroll até o formulário
 params = st.experimental_get_query_params()
 if "servico" in params:
     st.session_state["servico"] = params["servico"][0]
@@ -160,7 +159,7 @@ if "servico" in params:
     st.rerun()
 
 # ==========================
-# 2️⃣ Formulário do cliente
+# 2️⃣ Formulário de cliente
 # ==========================
 st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
 
