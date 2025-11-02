@@ -1,42 +1,69 @@
-from supabase import create_client
+import psycopg2
+import psycopg2.extras
 import streamlit as st
 import pandas as pd
 
-def get_client():
-    url = st.secrets["supabase"]["url"]
-    key = st.secrets["supabase"]["key"]
-    return create_client(url, key)
+def get_conn():
+    creds = st.secrets["postgres"]
+    conn = psycopg2.connect(
+        host=creds["host"],
+        port=creds["port"],
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        sslmode=creds["sslmode"]
+    )
+    return conn
+
 
 def listar_agendamentos_por_data(data_str):
-    client = get_client()
-    res = client.table("agendamentos").select("*").eq("data", data_str).execute()
-    return res.data or []
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur.execute("SELECT nome, telefone, data, hora, servico, valor FROM agendamentos WHERE data = %s;", (data_str,))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return pd.DataFrame(rows, columns=["nome", "telefone", "data", "hora", "servico", "valor"]).to_dict(orient="records")
+
 
 def inserir_agendamento(nome, telefone, data, hora, servico, valor):
-    client = get_client()
-    client.table("agendamentos").insert({
-        "nome": nome,
-        "telefone": telefone,
-        "data": data,
-        "hora": hora,
-        "servico": servico,
-        "valor": valor
-    }).execute()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO agendamentos (nome, telefone, data, hora, servico, valor)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (nome, telefone, data, hora, servico, valor))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 def bloquear_horario(data, hora, motivo):
-    client = get_client()
-    client.table("agendamentos").insert({
-        "data": data,
-        "hora": hora,
-        "servico": motivo,
-        "bloqueado": True
-    }).execute()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO agendamentos (data, hora, servico, bloqueado)
+        VALUES (%s, %s, %s, true)
+    """, (data, hora, motivo))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 def cancelar_agendamento(id_agendamento):
-    client = get_client()
-    client.table("agendamentos").delete().eq("id", id_agendamento).execute()
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM agendamentos WHERE id = %s", (id_agendamento,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
 
 def autenticar(usuario, senha):
-    client = get_client()
-    res = client.table("usuarios").select("*").eq("usuario", usuario).eq("senha", senha).execute()
-    return len(res.data) > 0
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM usuarios WHERE usuario = %s AND senha = %s", (usuario, senha))
+    ok = cur.fetchone()
+    cur.close()
+    conn.close()
+    return ok is not None
