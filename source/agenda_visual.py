@@ -188,22 +188,39 @@ st.markdown("<div class='agenda-container'>", unsafe_allow_html=True)
 for h in [f"{x:02d}:00" for x in range(9, 20)]:
     st.markdown("<div class='agenda-bloco'>", unsafe_allow_html=True)
     st.markdown(f"<span class='agenda-hora'>{h}</span>", unsafe_allow_html=True)
-    ag = next((a for a in agendamentos if a["hora"] == h), None)
+
+    ag = next((a for a in agendamentos if a.get("hora") == h), None)
+
     if ag:
         if ag.get("bloqueado"):
-            st.markdown(f"<div class='bloqueado'>🛑 <strong>Horário bloqueado</strong><br>{ag.get('servico','')}</div>", unsafe_allow_html=True)
+            # Exibe horário bloqueado
+            st.markdown(
+                f"<div class='bloqueado'>🛑 <strong>Horário bloqueado</strong><br>{ag.get('servico','')}</div>",
+                unsafe_allow_html=True
+            )
             if st.button(f"🔓 Desbloquear {h}", key=f"u_{h}"):
-                cancelar_agendamento(ag["id"])
+                cancelar_agendamento(data_str, h)
                 st.success(f"✅ Horário {h} liberado.")
                 st.rerun()
         else:
-            st.markdown(f"<div class='ocupado'><strong>{ag['nome']}</strong><br>✂️ {ag['servico']} — 💰 R$ {ag['valor']},00<br>📞 {ag['telefone']}</div>", unsafe_allow_html=True)
-            if st.button(f"❌ Cancelar {ag['nome']} - {h}", key=f"c_{h}"):
-                cancelar_agendamento(ag["id"])
-                st.warning(f"🚫 Agendamento de {ag['nome']} às {h} cancelado.")
+            # Exibe agendamento normal
+            nome = ag.get("nome", "Cliente")
+            servico = ag.get("servico", "Serviço não identificado")
+            valor = ag.get("valor", "—")
+            telefone = ag.get("telefone", "—")
+
+            st.markdown(
+                f"<div class='ocupado'><strong>{nome}</strong><br>"
+                f"✂️ {servico} — 💰 R$ {valor}<br>📞 {telefone}</div>",
+                unsafe_allow_html=True
+            )
+            if st.button(f"❌ Cancelar {nome} - {h}", key=f"c_{h}"):
+                cancelar_agendamento(data_str, h)
+                st.warning(f"🚫 Agendamento de {nome} às {h} cancelado.")
                 st.rerun()
     else:
         st.markdown("<span class='livre'>🕓 Horário livre</span>", unsafe_allow_html=True)
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
