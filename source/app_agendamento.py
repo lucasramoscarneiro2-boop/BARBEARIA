@@ -88,6 +88,7 @@ def safe_image(path: Path):
     else:
         st.image("https://via.placeholder.com/600x400?text=Imagem+indispon%C3%ADvel", use_column_width=True)
 
+
 # ==========================
 # 1️⃣ Escolha do serviço
 # ==========================
@@ -107,21 +108,64 @@ servicos = [
     ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
+# Renderização responsiva
 col1, col2 = st.columns(2)
+
 for i, (img_name, nome, valor) in enumerate(servicos):
+    is_selected = (
+        "servico" in st.session_state
+        and st.session_state["servico"] == nome
+    )
+    border_color = "#007bff" if is_selected else "#ccc"
+    box_shadow = "0 0 15px rgba(0,123,255,0.4)" if is_selected else "0 2px 10px rgba(0,0,0,.05)"
+
     with (col1 if i % 2 == 0 else col2):
-        st.markdown('<div class="servico-card">', unsafe_allow_html=True)
-        safe_image(IMAGES_DIR / img_name)
-        st.markdown(f'<div class="servico-nome">{nome}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="servico-preco">R$ {valor},00</div>', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div onclick="window.parent.postMessage({{'event':'select','servico':'{nome}','valor':{valor}}}, '*')"
+                 style="cursor:pointer; border:3px solid {border_color};
+                 border-radius:18px; padding:1rem; margin-bottom:1.2rem;
+                 background:rgba(255,255,255,0.95); box-shadow:{box_shadow};
+                 text-align:center; transition:transform .25s ease, box-shadow .25s ease, border .25s ease;"
+                 onmouseover="this.style.transform='scale(1.03)';"
+                 onmouseout="this.style.transform='scale(1.00)';">
+                <img src="imagens/{img_name}" alt="{nome}" style="width:100%;
+                     border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" />
+                <div style="padding-top:0.5rem;">
+                    <h4 style="margin:0; font-size:1.1rem; color:#111;">{nome}</h4>
+                    <p style="margin:0; color:#007bff; font-weight:600;">R$ {valor:.2f}</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
-            st.session_state["servico"] = nome
-            st.session_state["valor"] = valor
-            st.session_state["scroll_to_form"] = True
-            st.rerun()  # ✅ nova forma (substitui experimental_rerun)
-        st.markdown('</div>', unsafe_allow_html=True)
+# --- Captura o clique no card ---
+components.html(
+    """
+    <script>
+    window.addEventListener('message', (e) => {
+        if (e.data.event === 'select') {
+            const streamlitEvent = new CustomEvent('streamlit:setComponentValue', {detail: e.data});
+            window.parent.document.dispatchEvent(streamlitEvent);
+        }
+    });
+    </script>
+    """,
+    height=0,
+)
 
+# --- Detecta o evento no backend ---
+event = st.experimental_get_query_params()
+if "_component_value" in event:
+    try:
+        data = eval(event["_component_value"][0])
+        st.session_state["servico"] = data["servico"]
+        st.session_state["valor"] = data["valor"]
+        st.session_state["scroll_to_form"] = True
+        st.rerun()
+    except Exception:
+        pass
 # ==========================
 # 2️⃣ Dados do cliente (âncora + scroll)
 # ==========================
