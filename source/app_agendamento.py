@@ -147,7 +147,7 @@ div[data-baseweb="select"] svg {
 
 # ==========================
 # CABEÇALHO
-st.image("imagens/file_000000007da0720eba94e26dada870da.png")
+st.image("imagens/file_000000006b3471f5b360b005fdbdc905.png")
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
