@@ -9,11 +9,11 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# === OCULTAR LOGO GITHUB, FOOTER E MENU PADRÃO ===
+# Ocultar menu e rodapé do Streamlit
 st.markdown("""
 <style>
-#MainMenu, footer, header, [data-testid="stToolbar"], 
-[data-testid="stDecoration"], [data-testid="stStatusWidget"], 
+#MainMenu, footer, header, [data-testid="stToolbar"],
+[data-testid="stDecoration"], [data-testid="stStatusWidget"],
 [data-testid="stSidebarCollapseButton"] {
     visibility: hidden !important;
     display: none !important;
@@ -21,28 +21,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Caminhos robustos
+# Caminhos
 REPO_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_DIR = REPO_ROOT / "imagens"
 
 # ==========================
-# CSS PERSONALIZADO
+# CSS
 # ==========================
 st.markdown("""
 <style>
 body, .stApp {
-  background-color: #0b1a3a; /* azul escuro elegante */
+  background-color: #0b1a3a;
   font-family: 'Poppins', sans-serif;
-  color: #f5f6fa;
+  color: #ffffff !important;
 }
 
-/* Cabeçalhos */
-h1, h2, h3, h4 {
-  text-align: center;
-  color: #ffffff;
+/* Força cor branca em todos os títulos */
+h1, h2, h3, h4, label, p, span, div, strong {
+  color: #ffffff !important;
 }
-h1 { font-size: 1.8rem !important; margin-bottom: 0.8rem; }
-h2, h3 { font-size: 1.4rem !important; }
 
 /* Botões */
 .stButton>button {
@@ -107,18 +104,14 @@ input:focus, textarea:focus {
   outline: none !important;
   box-shadow: 0 0 6px rgba(0,180,216,0.4);
 }
-::placeholder {
-  color: #555 !important;
-}
 
-/* Ajuste visual do selectbox */
+/* Corrige selectbox de horário */
 [data-baseweb="select"] > div {
   background-color: #fff !important;
   color: #000 !important;
   border-radius: 10px !important;
   border: 1.5px solid #ccc !important;
   padding: 0.6rem 0.6rem !important;
-  font-weight: 500;
 }
 [data-baseweb="select"] svg {
   color: #00b4d8 !important;
@@ -162,13 +155,13 @@ st.markdown("""
 <style>
 .titulo-servico {
     text-align: center;
-    color: white;
+    color: white !important;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     margin-top: 1rem;
 }
 </style>
@@ -202,11 +195,24 @@ for i, (img_name, nome, valor) in enumerate(servicos):
             st.session_state["valor"] = valor
             st.session_state["scroll_to_form"] = True
             st.rerun()
+
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================
-# FORMULÁRIO CLIENTE
+# FORMULÁRIO
 # ==========================
+st.markdown("<div id='form-anchor'></div>", unsafe_allow_html=True)
+
+# Rola suavemente até o formulário após selecionar serviço
+if st.session_state.get("scroll_to_form"):
+    components.html("""
+        <script>
+        const el = window.parent.document.querySelector("#form-anchor");
+        if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+        </script>
+    """, height=0)
+    st.session_state["scroll_to_form"] = False
+
 if "servico" not in st.session_state:
     st.warning("👈 Escolha um serviço antes de continuar.")
     st.stop()
@@ -220,6 +226,7 @@ telefone = st.text_input("Seu WhatsApp (ex: 11 99999-9999)")
 data = st.date_input("Escolha o dia")
 data_str = data.strftime("%d/%m/%Y")
 
+# Corrige selectbox de horário
 disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
