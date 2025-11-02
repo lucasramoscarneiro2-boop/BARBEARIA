@@ -147,12 +147,58 @@ div[data-baseweb="select"] svg {
 
 # ==========================
 # CABEÇALHO
-st.image("imagens/file_000000006b3471f5b360b005fdbdc905.png")
+st.image("imagens/LOGO.png")
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
 
 # ==========================
 # FUNÇÕES
 # ==========================
+st.markdown("""
+<style>
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 🔹 Borda com efeito espiral de barbearia */
+.logo-container img {
+    border-radius: 50%;
+    padding: 8px;
+    background: conic-gradient(
+        from 0deg,
+        #004aad 0deg 60deg,   /* azul */
+        #ffffff 60deg 120deg, /* branco */
+        #d90429 120deg 180deg,/* vermelho */
+        #004aad 180deg 240deg,
+        #ffffff 240deg 300deg,
+        #d90429 300deg 360deg
+    );
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    width: 230px;
+    height: auto;
+}
+
+/* 🔹 Efeito de rotação suave (opcional) */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Descomente abaixo se quiser o espiral girando 💈 */
+/*
+.logo-container img {
+    animation: spin 6s linear infinite;
+}
+*/
+</style>
+
+<div class="logo-container">
+    <img src="imagens/logo_cardoso.png" alt="Cardoso Barber Shop Logo">
+</div>
+""", unsafe_allow_html=True)
 def horarios_disponiveis(data_str: str):
     agendamentos = listar_agendamentos_por_data(data_str)
     ocupados = {a.get("hora") for a in agendamentos if not a.get("bloqueado")}
@@ -170,22 +216,7 @@ def safe_image(path: Path):
 # 1️⃣ Escolha do serviço
 # ==========================
 
-st.markdown("""
-<h2 style='
-    text-align:center;
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    font-weight:700;
-    font-size:0.95rem;   /* 🔹 menor para caber numa linha */
-    white-space:nowrap;  /* 🔹 impede quebra de linha */
-    margin-top:0.8rem;
-'>
-✂️ <span>Escolha o serviço desejado</span>
-</h2>
-""", unsafe_allow_html=True)
+
 servicos = [
     ("Corte Masculino.png", "Corte masculino", 40),
     ("Barba.png", "Barba", 35),
