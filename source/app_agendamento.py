@@ -7,22 +7,18 @@ from db_supabase import inserir_agendamento, listar_agendamentos_por_data
 # ==========================
 st.set_page_config(page_title="Agendamento Barbearia", layout="centered", page_icon="💈")
 
-# CSS customizado para aparência
+# CSS customizado
 st.markdown("""
 <style>
-/* === GLOBAL === */
 body, .stApp {
     background-color: #f5f6fa;
     font-family: 'Poppins', sans-serif;
     color: #222;
 }
-
-/* === HEADER === */
 h1, h2, h3, h4 {
     text-align: center;
     color: #111;
 }
-
 h1 {
     font-size: 1.8rem !important;
     margin-bottom: 0.8rem;
@@ -30,8 +26,6 @@ h1 {
 h2, h3 {
     font-size: 1.4rem !important;
 }
-
-/* === BUTTONS === */
 .stButton>button {
     width: 100%;
     border-radius: 12px;
@@ -46,12 +40,6 @@ h2, h3 {
     background: linear-gradient(90deg, #0056b3, #0096c7);
     transform: scale(1.02);
 }
-
-/* === CARDS DOS SERVIÇOS === */
-.stImage > img {
-    border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
 .servico-card {
     background: white;
     border-radius: 16px;
@@ -60,27 +48,28 @@ h2, h3 {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     text-align: center;
 }
-.servico-card h4 {
-    margin-top: 0.5rem;
-    color: #222;
-    font-size: 1.1rem;
+.servico-img {
+    border-radius: 15px;
+    width: 100%;
+    height: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-
-/* === MOBILE FRIENDLY === */
+.servico-nome {
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #222;
+}
+.servico-preco {
+    color: #007bff;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
 @media (max-width: 768px) {
-    .block-container {
-        padding: 0.5rem 1rem !important;
-    }
-    h1 {
-        font-size: 1.4rem !important;
-    }
-    h4 {
-        font-size: 1rem !important;
-    }
-    .stButton>button {
-        font-size: 1rem !important;
-        padding: 0.6rem;
-    }
+    .block-container { padding: 0.5rem 1rem !important; }
+    h1 { font-size: 1.4rem !important; }
+    h4 { font-size: 1rem !important; }
+    .stButton>button { font-size: 1rem !important; padding: 0.6rem; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -92,7 +81,6 @@ st.markdown("<p style='text-align:center;'>Agende seu horário rapidamente no se
 # FUNÇÕES
 # ==========================
 def horarios_disponiveis(data_str):
-    """Retorna horários livres baseados no Supabase"""
     agendamentos = listar_agendamentos_por_data(data_str)
     ocupados = {a["hora"] for a in agendamentos if not a.get("bloqueado")}
     bloqueados = {a["hora"] for a in agendamentos if a.get("bloqueado")}
@@ -118,17 +106,30 @@ servicos = [
     ("Corte barba alisamento e sombrancelha.png", "Corte, Barba, Alisamento e Sobrancelha", 110),
 ]
 
-cols = st.columns(2)
+col1, col2 = st.columns(2)
 for i, (img, nome, valor) in enumerate(servicos):
-    with cols[i % 2]:
-        st.image(f"imagens/{img}", use_column_width=True)
-        st.markdown(f"<h4 style='text-align:center;'>{nome}</h4>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align:center;'>R$ {valor},00</p>", unsafe_allow_html=True)
-        if st.button(f"Selecionar {nome}", key=nome):
+    with (col1 if i % 2 == 0 else col2):
+        st.markdown(f"""
+        <div class="servico-card">
+            <img src="imagens/{img}" class="servico-img"/>
+            <div class="servico-nome">{nome}</div>
+            <div class="servico-preco">R$ {valor},00</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(f"Selecionar {nome}", key=f"btn_{nome}"):
             st.session_state["servico"] = nome
             st.session_state["valor"] = valor
-    if i % 2 == 1:
-        st.markdown("---")
+            st.session_state["scroll_to_form"] = True
+
+# Rolagem automática até o formulário
+scroll_js = """
+<script>
+window.scrollTo({ top: document.body.scrollHeight / 2, behavior: 'smooth' });
+</script>
+"""
+if st.session_state.get("scroll_to_form", False):
+    st.markdown(scroll_js, unsafe_allow_html=True)
+    st.session_state["scroll_to_form"] = False
 
 if "servico" not in st.session_state:
     st.warning("👈 Escolha um serviço antes de continuar.")
@@ -146,8 +147,8 @@ nome = st.text_input("Seu nome completo")
 telefone = st.text_input("Seu WhatsApp (ex: 11 99999-9999)")
 data = st.date_input("Escolha o dia")
 data_str = data.strftime("%d/%m/%Y")
-disponiveis = horarios_disponiveis(data_str)
 
+disponiveis = horarios_disponiveis(data_str)
 if not disponiveis:
     st.info("⏰ Nenhum horário disponível neste dia.")
 else:
