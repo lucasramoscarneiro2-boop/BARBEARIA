@@ -150,13 +150,10 @@ input:focus, textarea:focus {
 # CABEÇALHO
 # ==========================
 st.image("imagens/LOGO.png")
+# 🏠 Endereço logo abaixo do logo
 st.markdown("""
-<p style="text-align:center; color:#ffffff; font-size:1.1rem; margin-top:-10px;">
-📍 Rua Euclides Pires de Assis, 281 — Hortolândia, SP<br>
-<a href="https://www.google.com/maps?q=Rua+Euclides+Pires+de+Assis,+281,+Hortolândia,+SP" 
-target="_blank" style="color:#00b4d8; text-decoration:none; font-weight:600;">
-Ver no Google Maps
-</a>
+<p style="text-align:center; color:#ffffff; font-size:1.1rem; margin-top:-10px; font-weight:500;">
+📍 Rua Euclides Pires de Assis, 281 — Hortolândia, SP
 </p>
 """, unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;'>⏰ Agende seu horário!</p>", unsafe_allow_html=True)
